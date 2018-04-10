@@ -75,6 +75,7 @@
 		"./src/dragonBones/pixi/PixiTextureAtlasData.ts",
 		"./src/dragonBones/pixi/PixiArmatureDisplay.ts",
 		"./src/dragonBones/pixi/PixiSlot.ts",
-		"./src/dragonBones/pixi/PixiFactory.ts"
+		"./src/dragonBones/pixi/PixiFactory.ts",
+		"./src/dragonBones/pixi/import.ts"
 	]
 }

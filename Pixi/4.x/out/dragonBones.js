@@ -15429,3 +15429,8 @@ var dragonBones;
     }(dragonBones.BaseFactory));
     dragonBones.PixiFactory = PixiFactory;
 })(dragonBones || (dragonBones = {}));
+var dragonBones;
+(function (dragonBones) {
+    dragonBones.__es6Module = 0;
+})(dragonBones || (dragonBones = {}));
+window.dragonBones = dragonBones;
