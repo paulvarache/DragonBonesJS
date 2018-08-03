@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace dragonBones {
     /**
      * @inheritDoc
@@ -212,25 +213,6 @@ namespace dragonBones {
          */
         public get animation(): Animation {
             return this._armature.animation;
-        }
-
-        /**
-         * @inheritDoc
-         */
-        public hasEvent(type: EventStringType): boolean {
-            return this.hasDBEventListener(type);
-        }
-        /**
-         * @inheritDoc
-         */
-        public addEvent(type: EventStringType, listener: (event: EventObject) => void, target: any): void {
-            this.addDBEventListener(type, listener, target);
-        }
-        /**
-         * @inheritDoc
-         */
-        public removeEvent(type: EventStringType, listener: (event: EventObject) => void, target: any): void {
-            this.removeDBEventListener(type, listener, target);
         }
     }
 }

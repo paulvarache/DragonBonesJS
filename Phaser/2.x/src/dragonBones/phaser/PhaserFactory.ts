@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace dragonBones {
     /**
      * - The Phaser factory.
@@ -34,7 +35,6 @@ namespace dragonBones {
     export class PhaserFactory extends BaseFactory {
         /**
          * @internal
-         * @private
          */
         public static _game: Phaser.Game = null as any;
         private static _dragonBonesInstance: DragonBones = null as any;
@@ -74,17 +74,13 @@ namespace dragonBones {
 
             this._dragonBones = PhaserFactory._dragonBonesInstance;
         }
-        /**
-         * @private
-         */
+
         protected _isSupportMesh(): boolean {
             console.warn("Phaser-ce can not support mesh.");
 
             return false;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _buildTextureAtlasData(textureAtlasData: PhaserTextureAtlasData | null, textureAtlas: PIXI.BaseTexture | null): PhaserTextureAtlasData {
             if (textureAtlasData) {
                 textureAtlasData.renderTexture = textureAtlas;
@@ -95,9 +91,7 @@ namespace dragonBones {
 
             return textureAtlasData;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _buildArmature(dataPackage: BuildArmaturePackage): Armature {
             const armature = BaseObject.borrowObject(Armature);
             const armatureDisplay = new PhaserArmatureDisplay();
@@ -109,10 +103,8 @@ namespace dragonBones {
 
             return armature;
         }
-        /**
-         * @inheritDoc
-         */
-        protected _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, displays: Array<DisplayData | null> | null, armature: Armature): Slot {
+
+        protected _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, armature: Armature): Slot {
             // tslint:disable-next-line:no-unused-expression
             dataPackage;
             // tslint:disable-next-line:no-unused-expression
@@ -122,7 +114,7 @@ namespace dragonBones {
             const rawDisplay = new PhaserSlotDisplay(PhaserFactory._game, 0.0, 0.0, Phaser.Cache.DEFAULT);
 
             slot.init(
-                slotData, displays,
+                slotData, armature,
                 rawDisplay, rawDisplay
             );
 

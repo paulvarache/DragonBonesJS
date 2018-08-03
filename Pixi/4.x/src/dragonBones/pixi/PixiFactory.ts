@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace dragonBones {
     /**
      * - The PixiJS factory.
@@ -35,15 +36,7 @@ namespace dragonBones {
         private static _dragonBonesInstance: DragonBones = null as any;
         private static _factory: PixiFactory = null as any;
         private static _clockHandler(passedTime: number): void {
-            PixiFactory._dragonBonesInstance.advanceTime(PIXI.ticker.shared.elapsedMS * passedTime * 0.001);
-        }
-
-        private static _createDragonBones(): DragonBones {
-            const eventManager = new PixiArmatureDisplay();
-            const dragonBonesInstance = new DragonBones(eventManager);
-            PIXI.ticker.shared.add(PixiFactory._clockHandler, PixiFactory);
-
-            return dragonBonesInstance;
+            this._dragonBonesInstance.advanceTime(PIXI.ticker.shared.elapsedMS * passedTime * 0.001);
         }
         /**
          * - A global factory instance that can be used directly.
@@ -69,14 +62,14 @@ namespace dragonBones {
             super(dataParser);
 
             if (PixiFactory._dragonBonesInstance === null) {
-                PixiFactory._dragonBonesInstance = PixiFactory._createDragonBones();
+                const eventManager = new PixiArmatureDisplay();
+                PixiFactory._dragonBonesInstance = new DragonBones(eventManager);
+                PIXI.ticker.shared.add(PixiFactory._clockHandler, PixiFactory);
             }
 
             this._dragonBones = PixiFactory._dragonBonesInstance;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _buildTextureAtlasData(textureAtlasData: PixiTextureAtlasData | null, textureAtlas: PIXI.BaseTexture | null): PixiTextureAtlasData {
             if (textureAtlasData) {
                 textureAtlasData.renderTexture = textureAtlas;
@@ -87,9 +80,7 @@ namespace dragonBones {
 
             return textureAtlasData;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _buildArmature(dataPackage: BuildArmaturePackage): Armature {
             const armature = BaseObject.borrowObject(Armature);
             const armatureDisplay = new PixiArmatureDisplay();
@@ -101,19 +92,11 @@ namespace dragonBones {
 
             return armature;
         }
-        /**
-         * @inheritDoc
-         */
-        protected _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, displays: Array<DisplayData | null> | null, armature: Armature): Slot {
-            // tslint:disable-next-line:no-unused-expression
-            dataPackage;
-            // tslint:disable-next-line:no-unused-expression
-            armature;
-            
-            const slot = BaseObject.borrowObject(PixiSlot);
 
+        protected _buildSlot(_dataPackage: BuildArmaturePackage, slotData: SlotData, armature: Armature): Slot {
+            const slot = BaseObject.borrowObject(PixiSlot);
             slot.init(
-                slotData, displays,
+                slotData, armature,
                 new PIXI.Sprite(), new PIXI.mesh.Mesh(null as any, null as any, null as any, null as any, PIXI.mesh.Mesh.DRAW_MODES.TRIANGLES)
             );
 
@@ -126,6 +109,8 @@ namespace dragonBones {
          * @param dragonBonesName - The cached name of the DragonBonesData instance. (If not set, all DragonBonesData instances are retrieved, and when multiple DragonBonesData instances contain a the same name armature data, it may not be possible to accurately create a specific armature)
          * @param skinName - The skin name, you can set a different ArmatureData name to share it's skin data. (If not set, use the default skin data)
          * @returns The armature display container.
+         * @see dragonBones.IArmatureProxy
+         * @see dragonBones.BaseFactory#buildArmature
          * @version DragonBones 4.5
          * @example
          * <pre>
@@ -140,6 +125,8 @@ namespace dragonBones {
          * @param dragonBonesName - DragonBonesData 实例的缓存名称。 （如果未设置，将检索所有的 DragonBonesData 实例，当多个 DragonBonesData 实例中包含同名的骨架数据时，可能无法准确的创建出特定的骨架）
          * @param skinName - 皮肤名称，可以设置一个其他骨架数据名称来共享其皮肤数据。 （如果未设置，则使用默认的皮肤数据）
          * @returns 骨架的显示容器。
+         * @see dragonBones.IArmatureProxy
+         * @see dragonBones.BaseFactory#buildArmature
          * @version DragonBones 4.5
          * @example
          * <pre>
@@ -193,20 +180,6 @@ namespace dragonBones {
          */
         public get soundEventManager(): PixiArmatureDisplay {
             return this._dragonBones.eventManager as PixiArmatureDisplay;
-        }
-
-        /**
-         * - Deprecated, please refer to {@link #clock}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public static get clock(): WorldClock {
-            return PixiFactory.factory.clock;
         }
     }
 }

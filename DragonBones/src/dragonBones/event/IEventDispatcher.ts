@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -105,39 +105,5 @@ namespace dragonBones {
          * @language zh_CN
          */
         removeDBEventListener(type: EventStringType, listener: Function, thisObject: any): void;
-        
-        /**
-         * - Deprecated, please refer to {@link #hasDBEventListener()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #hasDBEventListener()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        hasEvent(type: EventStringType): boolean;
-        /**
-         * - Deprecated, please refer to {@link #addDBEventListener()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #addDBEventListener()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        addEvent(type: EventStringType, listener: Function, thisObject: any): void;
-        /**
-         * - Deprecated, please refer to {@link #removeDBEventListener()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #removeDBEventListener()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        removeEvent(type: EventStringType, listener: Function, thisObject: any): void;
     }
 }

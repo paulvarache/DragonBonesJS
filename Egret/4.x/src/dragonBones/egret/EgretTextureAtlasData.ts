@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace dragonBones {
     /**
      * - The egret texture atlas data.
@@ -37,14 +38,11 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public disposeEnabled: boolean;
 
         private _renderTexture: egret.Texture | null = null; // Initial value.
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             super._onClear();
 
@@ -96,12 +94,7 @@ namespace dragonBones {
                         textureData.renderTexture = new egret.Texture();
                     }
 
-                    if (EgretFactory._isV5) {
-                        (textureData.renderTexture as any)["$bitmapData"] = bitmapData;
-                    }
-                    else {
-                        textureData.renderTexture._bitmapData = bitmapData;
-                    }
+                    textureData.renderTexture.bitmapData = bitmapData;
 
                     if (textureData.rotated) {
                         textureData.renderTexture.$initData(
@@ -131,39 +124,9 @@ namespace dragonBones {
                 }
             }
         }
-
-        /**
-         * - Deprecated, please refer to {@link dragonBones.BaseFactory#removeTextureAtlasData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.BaseFactory#removeTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public dispose(): void {
-            console.warn("已废弃。");
-            this.returnToPool();
-        }
-        /**
-         * - Deprecated, please refer to {@link #renderTexture}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #renderTexture}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public get texture() {
-            console.warn("已废弃。");
-            return this.renderTexture;
-        }
     }
     /**
      * @internal
-     * @private
      */
     export class EgretTextureData extends TextureData {
         public static toString(): string {

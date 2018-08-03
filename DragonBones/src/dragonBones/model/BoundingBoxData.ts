@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -61,9 +61,7 @@ namespace dragonBones {
          * @private
          */
         public height: number;
-        /**
-         * @private
-         */
+
         protected _onClear(): void {
             this.color = 0x000000;
             this.width = 0.0;
@@ -296,10 +294,7 @@ namespace dragonBones {
 
             return intersectionCount;
         }
-        /**
-         * @inheritDoc
-         * @private
-         */
+
         protected _onClear(): void {
             super._onClear();
 
@@ -459,10 +454,7 @@ namespace dragonBones {
 
             return intersectionCount;
         }
-        /**
-         * @inheritDoc
-         * @private
-         */
+
         protected _onClear(): void {
             super._onClear();
 
@@ -681,26 +673,14 @@ namespace dragonBones {
          * @language zh_CN
          */
         public readonly vertices: Array<number> = [];
-        /**
-         * @private
-         */
-        public weight: WeightData | null = null; // Initial value.
-        /**
-         * @inheritDoc
-         * @private
-         */
+
         protected _onClear(): void {
             super._onClear();
-
-            if (this.weight !== null) {
-                this.weight.returnToPool();
-            }
 
             this.type = BoundingBoxType.Polygon;
             this.x = 0.0;
             this.y = 0.0;
             this.vertices.length = 0;
-            this.weight = null;
         }
         /**
          * @inheritDoc

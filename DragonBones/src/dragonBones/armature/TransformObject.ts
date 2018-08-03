@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -34,17 +34,8 @@ namespace dragonBones {
      * @language zh_CN
      */
     export abstract class TransformObject extends BaseObject {
-        /**
-         * @private
-         */
         protected static readonly _helpMatrix: Matrix = new Matrix();
-        /**
-         * @private
-         */
         protected static readonly _helpTransform: Transform = new Transform();
-        /**
-         * @private
-         */
         protected static readonly _helpPoint: Point = new Point();
         /**
          * - A matrix relative to the armature coordinate system.
@@ -91,22 +82,20 @@ namespace dragonBones {
          * @private
          */
         public userData: any;
-        /**
-         * @private
-         */
         protected _globalDirty: boolean;
         /**
          * @internal
-         * @private
+         */
+        public _alpha: number;
+        /**
+         * @internal
+         */
+        public _globalAlpha: number;
+        /**
+         * @internal
          */
         public _armature: Armature;
         /**
-         * @internal
-         * @private
-         */
-        public _parent: Bone;
-        /**
-         * @private
          */
         protected _onClear(): void {
             this.globalTransformMatrix.identity();
@@ -116,22 +105,9 @@ namespace dragonBones {
             this.userData = null;
 
             this._globalDirty = false;
+            this._alpha = 1.0;
+            this._globalAlpha = 1.0;
             this._armature = null as any; //
-            this._parent = null as any; //
-        }
-        /**
-         * @internal
-         * @private
-         */
-        public _setArmature(value: Armature | null): void {
-            this._armature = value as any;
-        }
-        /**
-         * @internal
-         * @private
-         */
-        public _setParent(value: Bone | null): void {
-            this._parent = value as any;
         }
         /**
          * - For performance considerations, rotation or scale in the {@link #global} attribute of the bone or slot is not always properly accessible,
@@ -174,19 +150,6 @@ namespace dragonBones {
          */
         public get armature(): Armature {
             return this._armature;
-        }
-        /**
-         * - The parent bone to which it belongs.
-         * @version DragonBones 3.0
-         * @language en_US
-         */
-        /**
-         * - 所属的父骨骼。
-         * @version DragonBones 3.0
-         * @language zh_CN
-         */
-        public get parent(): Bone {
-            return this._parent;
         }
     }
 }

@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -84,12 +84,10 @@ namespace dragonBones {
         public stage: ArmatureData | null;
         /**
          * @internal
-         * @private
          */
         public readonly frameIndices: Array<number> = [];
         /**
          * @internal
-         * @private
          */
         public readonly cachedFrames: Array<number> = [];
         /**
@@ -109,46 +107,41 @@ namespace dragonBones {
         public readonly armatures: Map<ArmatureData> = {};
         /**
          * @internal
-         * @private
          */
         public binary: ArrayBuffer;
         /**
          * @internal
-         * @private
          */
         public intArray: Int16Array;
         /**
          * @internal
-         * @private
          */
         public floatArray: Float32Array;
         /**
          * @internal
-         * @private
          */
         public frameIntArray: Int16Array;
         /**
          * @internal
-         * @private
          */
         public frameFloatArray: Float32Array;
         /**
          * @internal
-         * @private
          */
         public frameArray: Int16Array;
         /**
          * @internal
-         * @private
          */
         public timelineArray: Uint16Array;
+        /**
+         * @internal
+         */
+        public colorArray: Uint16Array;
         /**
          * @private
          */
         public userData: UserData | null = null; // Initial value.
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             for (let k in this.armatures) {
                 this.armatures[k].returnToPool();
@@ -175,11 +168,11 @@ namespace dragonBones {
             this.frameFloatArray = null as any; //
             this.frameArray = null as any; //
             this.timelineArray = null as any; //
+            this.colorArray = null as any; //
             this.userData = null;
         }
         /**
          * @internal
-         * @private
          */
         public addArmature(value: ArmatureData): void {
             if (value.name in this.armatures) {
@@ -193,33 +186,18 @@ namespace dragonBones {
         }
         /**
          * - Get a specific armature data.
-         * @param name - The armature data name.
+         * @param armatureName - The armature data name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的骨架数据。
-         * @param name - 骨架数据名称。
+         * @param armatureName - 骨架数据名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        public getArmature(name: string): ArmatureData | null {
-            return name in this.armatures ? this.armatures[name] : null;
-        }
-
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.BaseFactory#removeDragonBonesData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.BaseFactory#removeDragonBonesData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public dispose(): void {
-            console.warn("已废弃");
-            this.returnToPool();
+        public getArmature(armatureName: string): ArmatureData | null {
+            return armatureName in this.armatures ? this.armatures[armatureName] : null;
         }
     }
 }

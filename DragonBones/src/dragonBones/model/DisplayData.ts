@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -22,15 +22,52 @@
  */
 namespace dragonBones {
     /**
-     * @internal
+     * @private
+     */
+    export class GeometryData {
+        public isShared: boolean;
+        public inheritDeform: boolean;
+        public offset: number;
+        public data: DragonBonesData;
+        public weight: WeightData | null = null; // Initial value.
+
+        public clear(): void {
+            if (!this.isShared && this.weight !== null) {
+                this.weight.returnToPool();
+            }
+
+            this.isShared = false;
+            this.inheritDeform = false;
+            this.offset = 0;
+            this.data = null as any;
+            this.weight = null;
+        }
+
+        public shareFrom(value: GeometryData): void {
+            this.isShared = true;
+            this.offset = value.offset;
+            this.weight = value.weight;
+        }
+
+        public get vertexCount(): number {
+            const intArray = this.data.intArray;
+            return intArray[this.offset + dragonBones.BinaryOffset.GeometryVertexCount];
+        }
+
+        public get triangleCount(): number {
+            const intArray = this.data.intArray;
+            return intArray[this.offset + dragonBones.BinaryOffset.GeometryTriangleCount];
+        }
+    }
+    /**
      * @private
      */
     export abstract class DisplayData extends BaseObject {
         public type: DisplayType;
         public name: string;
         public path: string;
-        public parent: SkinData;
         public readonly transform: Transform = new Transform();
+        public parent: SkinData;
 
         protected _onClear(): void {
             this.name = "";
@@ -40,7 +77,6 @@ namespace dragonBones {
         }
     }
     /**
-     * @internal
      * @private
      */
     export class ImageDisplayData extends DisplayData {
@@ -60,7 +96,6 @@ namespace dragonBones {
         }
     }
     /**
-     * @internal
      * @private
      */
     export class ArmatureDisplayData extends DisplayData {
@@ -92,7 +127,6 @@ namespace dragonBones {
         }
     }
     /**
-     * @internal
      * @private
      */
     export class MeshDisplayData extends DisplayData {
@@ -100,33 +134,18 @@ namespace dragonBones {
             return "[class dragonBones.MeshDisplayData]";
         }
 
-        public inheritDeform: boolean;
-        public offset: number; // IntArray.
-        public weight: WeightData | null = null; // Initial value.
-        public glue: GlueData | null = null; // Initial value.
+        public readonly geometry: GeometryData = new GeometryData();
         public texture: TextureData | null;
 
         protected _onClear(): void {
             super._onClear();
 
-            if (this.weight !== null) {
-                this.weight.returnToPool();
-            }
-
-            if (this.glue !== null) {
-                this.glue.returnToPool();
-            }
-
             this.type = DisplayType.Mesh;
-            this.inheritDeform = false;
-            this.offset = 0;
-            this.weight = null;
-            this.glue = null;
+            this.geometry.clear();
             this.texture = null;
         }
     }
     /**
-     * @internal
      * @private
      */
     export class BoundingBoxDisplayData extends DisplayData {
@@ -148,7 +167,28 @@ namespace dragonBones {
         }
     }
     /**
-     * @internal
+     * @private
+     */
+    export class PathDisplayData extends DisplayData {
+        public static toString(): string {
+            return "[class dragonBones.PathDisplayData]";
+        }
+        public closed: boolean;
+        public constantSpeed: boolean;
+        public readonly geometry: GeometryData = new GeometryData();
+        public readonly curveLengths: Array<number> = [];
+
+        protected _onClear(): void {
+            super._onClear();
+
+            this.type = DisplayType.Path;
+            this.closed = false;
+            this.constantSpeed = false;
+            this.geometry.clear();
+            this.curveLengths.length = 0;
+        }
+    }
+    /**
      * @private
      */
     export class WeightData extends BaseObject {
@@ -157,7 +197,7 @@ namespace dragonBones {
         }
 
         public count: number;
-        public offset: number; // IntArray.
+        public offset: number;
         public readonly bones: Array<BoneData> = [];
 
         protected _onClear(): void {
@@ -168,27 +208,6 @@ namespace dragonBones {
 
         public addBone(value: BoneData): void {
             this.bones.push(value);
-        }
-    }
-    /**
-     * @internal
-     * @private
-     */
-    export class GlueData extends BaseObject {
-        public static toString(): string {
-            return "[class dragonBones.GlueData]";
-        }
-
-        public readonly weights: Array<number>;
-        public readonly meshes: Array<MeshDisplayData | null> = [];
-
-        protected _onClear(): void {
-            this.weights.length = 0;
-            this.meshes.length = 0;
-        }
-
-        public addMesh(value: MeshDisplayData | null): void {
-            this.meshes.push(value);
         }
     }
 }

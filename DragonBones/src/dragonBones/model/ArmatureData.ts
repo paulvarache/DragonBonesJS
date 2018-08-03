@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -154,9 +154,7 @@ namespace dragonBones {
          * @private
          */
         public parent: DragonBonesData;
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             for (const action of this.defaultActions) {
                 action.returnToPool();
@@ -223,7 +221,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public sortBones(): void {
             const total = this.sortedBones.length;
@@ -268,7 +265,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public cacheFrames(frameRate: number): void {
             if (this.cacheFrameRate > 0) { // TODO clear cache.
@@ -282,7 +278,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public setCacheFrame(globalTransformMatrix: Matrix, transform: Transform): number {
             const dataArray = this.parent.cachedFrames;
@@ -304,7 +299,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public getCacheFrame(globalTransformMatrix: Matrix, transform: Transform, arrayOffset: number): void {
             const dataArray = this.parent.cachedFrames;
@@ -323,7 +317,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addBone(value: BoneData): void {
             if (value.name in this.bones) {
@@ -336,7 +329,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addSlot(value: SlotData): void {
             if (value.name in this.slots) {
@@ -349,7 +341,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addConstraint(value: ConstraintData): void {
             if (value.name in this.constraints) {
@@ -361,7 +352,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addSkin(value: SkinData): void {
             if (value.name in this.skins) {
@@ -381,7 +371,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addAnimation(value: AnimationData): void {
             if (value.name in this.animations) {
@@ -398,7 +387,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addAction(value: ActionData, isDefault: boolean): void {
             if (isDefault) {
@@ -410,57 +398,56 @@ namespace dragonBones {
         }
         /**
          * - Get a specific done data.
-         * @param name - The bone name.
+         * @param boneName - The bone name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的骨骼数据。
-         * @param name - 骨骼名称。
+         * @param boneName - 骨骼名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        public getBone(name: string): BoneData | null {
-            return name in this.bones ? this.bones[name] : null;
+        public getBone(boneName: string): BoneData | null {
+            return boneName in this.bones ? this.bones[boneName] : null;
         }
         /**
          * - Get a specific slot data.
-         * @param name - The slot name.
+         * @param slotName - The slot name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的插槽数据。
-         * @param name - 插槽名称。
+         * @param slotName - 插槽名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        public getSlot(name: string): SlotData | null {
-            return name in this.slots ? this.slots[name] : null;
+        public getSlot(slotName: string): SlotData | null {
+            return slotName in this.slots ? this.slots[slotName] : null;
         }
         /**
          * @private
          */
-        public getConstraint(name: string): ConstraintData | null {
-            return name in this.constraints ? this.constraints[name] : null;
+        public getConstraint(constraintName: string): ConstraintData | null {
+            return constraintName in this.constraints ? this.constraints[constraintName] : null;
         }
         /**
          * - Get a specific skin data.
-         * @param name - The skin name.
+         * @param skinName - The skin name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定皮肤数据。
-         * @param name - 皮肤名称。
+         * @param skinName - 皮肤名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        public getSkin(name: string): SkinData | null {
-            return name in this.skins ? this.skins[name] : null;
+        public getSkin(skinName: string): SkinData | null {
+            return skinName in this.skins ? this.skins[skinName] : null;
         }
         /**
-         * @internal
          * @private
          */
         public getMesh(skinName: string, slotName: string, meshName: string): MeshDisplayData | null {
@@ -473,18 +460,18 @@ namespace dragonBones {
         }
         /**
          * - Get a specific animation data.
-         * @param name - The animation name.
+         * @param animationName - The animation animationName.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的动画数据。
-         * @param name - 动画名称。
+         * @param animationName - 动画名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        public getAnimation(name: string): AnimationData | null {
-            return name in this.animations ? this.animations[name] : null;
+        public getAnimation(animationName: string): AnimationData | null {
+            return animationName in this.animations ? this.animations[animationName] : null;
         }
     }
     /**
@@ -533,6 +520,10 @@ namespace dragonBones {
          */
         public length: number;
         /**
+         * @private
+         */
+        public alpha: number;
+        /**
          * - The bone name.
          * @version DragonBones 3.0
          * @language en_US
@@ -562,11 +553,8 @@ namespace dragonBones {
          * @language zh_CN
          */
         public parent: BoneData | null;
-        /**
-         * @inheritDoc
-         */
-        protected _onClear(): void {
 
+        protected _onClear(): void {
             if (this.userData !== null) {
                 this.userData.returnToPool();
             }
@@ -577,6 +565,7 @@ namespace dragonBones {
             this.inheritReflection = false;
             this.type = BoneType.Bone;
             this.length = 0.0;
+            this.alpha = 1.0;
             this.name = "";
             this.transform.identity();
             this.userData = null;
@@ -585,25 +574,23 @@ namespace dragonBones {
     }
     /**
      * @internal
-     * @private
      */
     export class SurfaceData extends BoneData {
         public static toString(): string {
             return "[class dragonBones.SurfaceData]";
         }
+
         public segmentX: number;
         public segmentY: number;
-        public readonly vertices: Array<number> = [];
-        /**
-         * @inheritDoc
-         */
+        public readonly geometry: GeometryData = new GeometryData();
+
         protected _onClear(): void {
             super._onClear();
 
             this.type = BoneType.Surface;
             this.segmentX = 0;
             this.segmentY = 0;
-            this.vertices.length = 0;
+            this.geometry.clear();
         }
     }
     /**
@@ -619,12 +606,10 @@ namespace dragonBones {
     export class SlotData extends BaseObject {
         /**
          * @internal
-         * @private
          */
         public static readonly DEFAULT_COLOR: ColorTransform = new ColorTransform();
         /**
          * @internal
-         * @private
          */
         public static createColor(): ColorTransform {
             return new ColorTransform();
@@ -645,6 +630,14 @@ namespace dragonBones {
          * @private
          */
         public zOrder: number;
+        /**
+         * @private
+         */
+        public zIndex: number;
+        /**
+         * @private
+         */
+        public alpha: number;
         /**
          * - The slot name.
          * @version DragonBones 3.0
@@ -675,9 +668,7 @@ namespace dragonBones {
          * @language zh_CN
          */
         public parent: BoneData;
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             if (this.userData !== null) {
                 this.userData.returnToPool();
@@ -686,6 +677,8 @@ namespace dragonBones {
             this.blendMode = BlendMode.Normal;
             this.displayIndex = 0;
             this.zOrder = 0;
+            this.zIndex = 0;
+            this.alpha = 1.0;
             this.name = "";
             this.color = null as any; //
             this.userData = null;

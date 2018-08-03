@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -79,7 +79,7 @@ namespace dragonBones {
         /**
          * @private
          */
-        public additiveBlending: boolean;
+        public additive: boolean;
         /**
          * - Whether the animation state has control over the display property of the slots.
          * Sometimes blend a animation state does not want it to control the display properties of the slots,
@@ -273,9 +273,7 @@ namespace dragonBones {
          * @private
          */
         public readonly boneMask: Array<string> = [];
-        /**
-         * @private
-         */
+
         protected _onClear(): void {
             this.pauseFadeOut = true;
             this.fadeOutMode = AnimationFadeOutMode.All;
@@ -283,7 +281,7 @@ namespace dragonBones {
             this.fadeOutTime = -1.0;
 
             this.actionEnabled = true;
-            this.additiveBlending = false;
+            this.additive = false;
             this.displayControl = true;
             this.pauseFadeIn = true;
             this.resetToPose = true;
@@ -317,7 +315,7 @@ namespace dragonBones {
             this.fadeOutTweenType = value.fadeOutTweenType;
 
             this.actionEnabled = value.actionEnabled;
-            this.additiveBlending = value.additiveBlending;
+            this.additive = value.additive;
             this.displayControl = value.displayControl;
             this.pauseFadeIn = value.pauseFadeIn;
             this.resetToPose = value.resetToPose;
@@ -337,67 +335,6 @@ namespace dragonBones {
             this.boneMask.length = value.boneMask.length;
             for (let i = 0, l = this.boneMask.length; i < l; ++i) {
                 this.boneMask[i] = value.boneMask[i];
-            }
-        }
-        /**
-         * @private
-         */
-        public containsBoneMask(name: string): boolean {
-            return this.boneMask.length === 0 || this.boneMask.indexOf(name) >= 0;
-        }
-        /**
-         * @private
-         */
-        public addBoneMask(armature: Armature, name: string, recursive: boolean = true): void {
-            const currentBone = armature.getBone(name);
-            if (currentBone === null) {
-                return;
-            }
-
-            if (this.boneMask.indexOf(name) < 0) { // Add mixing
-                this.boneMask.push(name);
-            }
-
-            if (recursive) { // Add recursive mixing.
-                for (const bone of armature.getBones()) {
-                    if (this.boneMask.indexOf(bone.name) < 0 && currentBone.contains(bone)) {
-                        this.boneMask.push(bone.name);
-                    }
-                }
-            }
-        }
-        /**
-         * @private
-         */
-        public removeBoneMask(armature: Armature, name: string, recursive: boolean = true): void {
-            const index = this.boneMask.indexOf(name);
-            if (index >= 0) { // Remove mixing.
-                this.boneMask.splice(index, 1);
-            }
-
-            if (recursive) {
-                const currentBone = armature.getBone(name);
-                if (currentBone !== null) {
-                    if (this.boneMask.length > 0) { // Remove recursive mixing.
-                        for (const bone of armature.getBones()) {
-                            const index = this.boneMask.indexOf(bone.name);
-                            if (index >= 0 && currentBone.contains(bone)) {
-                                this.boneMask.splice(index, 1);
-                            }
-                        }
-                    }
-                    else { // Add unrecursive mixing.
-                        for (const bone of armature.getBones()) {
-                            if (bone === currentBone) {
-                                continue;
-                            }
-
-                            if (!currentBone.contains(bone)) {
-                                this.boneMask.push(bone.name);
-                            }
-                        }
-                    }
-                }
             }
         }
     }

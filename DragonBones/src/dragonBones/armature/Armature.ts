@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -44,7 +44,7 @@ namespace dragonBones {
             return "[class dragonBones.Armature]";
         }
         private static _onSortSlots(a: Slot, b: Slot): number {
-            return a._zOrder > b._zOrder ? 1 : -1;
+            return a._zIndex * 1000 + a._zOrder > b._zIndex * 1000 + b._zOrder ? 1 : -1;
         }
         /**
          * - Whether to inherit the animation control of the parent armature.
@@ -65,34 +65,40 @@ namespace dragonBones {
          * @private
          */
         public userData: any;
-
-        private _lockUpdate: boolean;
-        private _bonesDirty: boolean;
+        /**
+         * @internal
+         */
+        public _lockUpdate: boolean;
         private _slotsDirty: boolean;
         private _zOrderDirty: boolean;
+        /**
+         * @internal
+         */
+        public _zIndexDirty: boolean;
+        /**
+         * @internal
+         */
+        public _alphaDirty: boolean;
         private _flipX: boolean;
         private _flipY: boolean;
         /**
          * @internal
-         * @private
          */
         public _cacheFrameIndex: number;
+        private _alpha: number;
+        /**
+         * @internal
+         */
+        public _globalAlpha: number;
         private readonly _bones: Array<Bone> = [];
         private readonly _slots: Array<Slot> = [];
         /**
          * @internal
-         * @private
-         */
-        public readonly _glueSlots: Array<Slot> = [];
-        /**
-         * @internal
-         * @private
          */
         public readonly _constraints: Array<Constraint> = [];
-        private readonly _actions: Array<ActionData> = [];
+        private readonly _actions: Array<EventObject> = [];
         /**
          * @internal
-         * @private
          */
         public _armatureData: ArmatureData;
         private _animation: Animation = null as any; // Initial value.
@@ -100,24 +106,19 @@ namespace dragonBones {
         private _display: any;
         /**
          * @internal
-         * @private
          */
         public _replaceTextureAtlasData: TextureAtlasData | null = null; // Initial value.
         private _replacedTexture: any;
         /**
          * @internal
-         * @private
          */
         public _dragonBones: DragonBones;
         private _clock: WorldClock | null = null; // Initial value.
         /**
          * @internal
-         * @private
          */
         public _parent: Slot | null;
-        /**
-         * @private
-         */
+
         protected _onClear(): void {
             if (this._clock !== null) { // Remove clock first.
                 this._clock.remove(this);
@@ -133,6 +134,10 @@ namespace dragonBones {
 
             for (const constraint of this._constraints) {
                 constraint.returnToPool();
+            }
+
+            for (const action of this._actions) {
+                action.returnToPool();
             }
 
             if (this._animation !== null) {
@@ -151,15 +156,17 @@ namespace dragonBones {
             this.userData = null;
 
             this._lockUpdate = false;
-            this._bonesDirty = false;
-            this._slotsDirty = false;
+            this._slotsDirty = true;
             this._zOrderDirty = false;
+            this._zIndexDirty = false;
+            this._alphaDirty = true;
             this._flipX = false;
             this._flipY = false;
             this._cacheFrameIndex = -1;
+            this._alpha = 1.0;
+            this._globalAlpha = 1.0;
             this._bones.length = 0;
             this._slots.length = 0;
-            this._glueSlots.length = 0;
             this._constraints.length = 0;
             this._actions.length = 0;
             this._armatureData = null as any; //
@@ -172,57 +179,8 @@ namespace dragonBones {
             this._clock = null;
             this._parent = null;
         }
-
-        private _sortBones(): void {
-            const total = this._bones.length;
-            if (total <= 0) {
-                return;
-            }
-
-            const sortHelper = this._bones.concat();
-            let index = 0;
-            let count = 0;
-
-            this._bones.length = 0;
-            while (count < total) {
-                const bone = sortHelper[index++];
-                if (index >= total) {
-                    index = 0;
-                }
-
-                if (this._bones.indexOf(bone) >= 0) {
-                    continue;
-                }
-
-                if (bone._hasConstraint) { // Wait constraint.
-                    let flag = false;
-                    for (const constraint of this._constraints) {
-                        if (constraint._root === bone && this._bones.indexOf(constraint._target) < 0) {
-                            flag = true;
-                            break;
-                        }
-                    }
-
-                    if (flag) {
-                        continue;
-                    }
-                }
-
-                if (bone.parent !== null && this._bones.indexOf(bone.parent) < 0) { // Wait parent.
-                    continue;
-                }
-
-                this._bones.push(bone);
-                count++;
-            }
-        }
-
-        private _sortSlots(): void {
-            this._slots.sort(Armature._onSortSlots);
-        }
         /**
          * @internal
-         * @private
          */
         public _sortZOrder(slotIndices: Array<number> | Int16Array | null, offset: number): void {
             const slotDatas = this._armatureData.sortedSlots;
@@ -237,8 +195,9 @@ namespace dragonBones {
 
                     const slotData = slotDatas[slotIndex];
                     const slot = this.getSlot(slotData.name);
+
                     if (slot !== null) {
-                        slot._setZorder(i);
+                        slot._setZOrder(i);
                     }
                 }
 
@@ -248,49 +207,32 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
-        public _addBoneToBoneList(value: Bone): void {
+        public _addBone(value: Bone): void {
             if (this._bones.indexOf(value) < 0) {
-                this._bonesDirty = true;
                 this._bones.push(value);
             }
         }
         /**
          * @internal
-         * @private
          */
-        public _removeBoneFromBoneList(value: Bone): void {
-            const index = this._bones.indexOf(value);
-            if (index >= 0) {
-                this._bones.splice(index, 1);
-            }
-        }
-        /**
-         * @internal
-         * @private
-         */
-        public _addSlotToSlotList(value: Slot): void {
+        public _addSlot(value: Slot): void {
             if (this._slots.indexOf(value) < 0) {
-                this._slotsDirty = true;
                 this._slots.push(value);
             }
         }
         /**
          * @internal
-         * @private
          */
-        public _removeSlotFromSlotList(value: Slot): void {
-            const index = this._slots.indexOf(value);
-            if (index >= 0) {
-                this._slots.splice(index, 1);
+        public _addConstraint(value: Constraint): void {
+            if (this._constraints.indexOf(value) < 0) {
+                this._constraints.push(value);
             }
         }
         /**
          * @internal
-         * @private
          */
-        public _bufferAction(action: ActionData, append: boolean): void {
+        public _bufferAction(action: EventObject, append: boolean): void {
             if (this._actions.indexOf(action) < 0) {
                 if (append) {
                     this._actions.push(action);
@@ -328,7 +270,6 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public init(
             armatureData: ArmatureData,
@@ -356,6 +297,8 @@ namespace dragonBones {
                 return;
             }
 
+            this._lockUpdate = true;
+
             if (this._armatureData === null) {
                 console.warn("The armature has been disposed.");
                 return;
@@ -366,21 +309,34 @@ namespace dragonBones {
             }
 
             const prevCacheFrameIndex = this._cacheFrameIndex;
-
             // Update animation.
             this._animation.advanceTime(passedTime);
+            // Sort slots.
+            if (this._slotsDirty || this._zIndexDirty) {
+                this._slots.sort(Armature._onSortSlots);
 
-            // Sort bones and slots.
-            if (this._bonesDirty) {
-                this._bonesDirty = false;
-                this._sortBones();
-            }
+                if (this._zIndexDirty) {
+                    for (let i = 0, l = this._slots.length; i < l; ++i) {
+                        this._slots[i]._setZOrder(i); // 
+                    }
+                }
 
-            if (this._slotsDirty) {
                 this._slotsDirty = false;
-                this._sortSlots();
+                this._zIndexDirty = false;
             }
+            // Update alpha.
+            if (this._alphaDirty) {
+                this._alphaDirty = false;
+                this._globalAlpha = this._alpha * (this._parent !== null ? this._parent._globalAlpha : 1.0);
 
+                for (const bone of this._bones) {
+                    bone._updateAlpha();
+                }
+
+                for (const slot of this._slots) {
+                    slot._updateAlpha();
+                }
+            }
             // Update bones and slots.
             if (this._cacheFrameIndex < 0 || this._cacheFrameIndex !== prevCacheFrameIndex) {
                 let i = 0, l = 0;
@@ -391,26 +347,42 @@ namespace dragonBones {
                 for (i = 0, l = this._slots.length; i < l; ++i) {
                     this._slots[i].update(this._cacheFrameIndex);
                 }
-
-                for (i = 0, l = this._glueSlots.length; i < l; ++i) {
-                    this._glueSlots[i]._updateGlueMesh();
-                }
             }
-
             // Do actions.
             if (this._actions.length > 0) {
-                this._lockUpdate = true;
-
                 for (const action of this._actions) {
-                    if (action.type === ActionType.Play) {
-                        this._animation.fadeIn(action.name);
+                    const actionData = action.actionData;
+                    if (actionData !== null) {
+                        if (actionData.type === ActionType.Play) {
+                            if (action.slot !== null) {
+                                const childArmature = action.slot.childArmature;
+                                if (childArmature !== null) {
+                                    childArmature.animation.fadeIn(actionData.name);
+                                }
+                            }
+                            else if (action.bone !== null) {
+                                for (const slot of this.getSlots()) {
+                                    if (slot.parent === action.bone) {
+                                        const childArmature = slot.childArmature;
+                                        if (childArmature !== null) {
+                                            childArmature.animation.fadeIn(actionData.name);
+                                        }
+                                    }
+                                }
+                            }
+                            else {
+                                this._animation.fadeIn(actionData.name);
+                            }
+                        }
                     }
+
+                    action.returnToPool();
                 }
 
                 this._actions.length = 0;
-                this._lockUpdate = false;
             }
 
+            this._lockUpdate = false;
             this._proxy.dbUpdate();
         }
         /**
@@ -691,52 +663,6 @@ namespace dragonBones {
             return null;
         }
         /**
-         * @deprecated
-         */
-        public addBone(value: Bone, parentName: string): void {
-            console.assert(value !== null);
-
-            value._setArmature(this);
-            value._setParent(parentName.length > 0 ? this.getBone(parentName) : null);
-        }
-        /**
-         * @deprecated
-         */
-        public addSlot(value: Slot, parentName: string): void {
-            const bone = this.getBone(parentName);
-
-            console.assert(value !== null && bone !== null);
-
-            value._setArmature(this);
-            value._setParent(bone);
-        }
-        /**
-         * @private
-         */
-        public addConstraint(value: Constraint): void {
-            if (this._constraints.indexOf(value) < 0) {
-                this._constraints.push(value);
-            }
-        }
-        /**
-         * @deprecated
-         */
-        public removeBone(value: Bone): void {
-            console.assert(value !== null && value.armature === this);
-
-            value._setParent(null);
-            value._setArmature(null);
-        }
-        /**
-         * @deprecated
-         */
-        public removeSlot(value: Slot): void {
-            console.assert(value !== null && value.armature === this);
-
-            value._setParent(null);
-            value._setArmature(null);
-        }
-        /**
          * - Get all bones.
          * @see dragonBones.Bone
          * @version DragonBones 3.0
@@ -997,66 +923,6 @@ namespace dragonBones {
          */
         public get parent(): Slot | null {
             return this._parent;
-        }
-
-        /**
-         * @deprecated
-         * @private
-         */
-        public replaceTexture(texture: any): void {
-            this.replacedTexture = texture;
-        }
-        /**
-         * - Deprecated, please refer to {@link #eventDispatcher}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventDispatcher}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public hasEventListener(type: EventStringType): boolean {
-            return this._proxy.hasDBEventListener(type);
-        }
-        /**
-         * - Deprecated, please refer to {@link #eventDispatcher}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventDispatcher}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public addEventListener(type: EventStringType, listener: Function, target: any): void {
-            this._proxy.addDBEventListener(type, listener, target);
-        }
-        /**
-         * - Deprecated, please refer to {@link #eventDispatcher}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventDispatcher}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public removeEventListener(type: EventStringType, listener: Function, target: any): void {
-            this._proxy.removeDBEventListener(type, listener, target);
-        }
-        /**
-         * - Deprecated, please refer to {@link #cacheFrameRate}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #cacheFrameRate}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public enableAnimationCache(frameRate: number): void {
-            this.cacheFrameRate = frameRate;
         }
         /**
          * - Deprecated, please refer to {@link #display}.

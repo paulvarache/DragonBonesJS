@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace dragonBones {
     /**
      * - The PixiJS slot.
@@ -38,9 +39,7 @@ namespace dragonBones {
 
         private _textureScale: number;
         private _renderDisplay: PIXI.DisplayObject;
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             super._onClear();
 
@@ -48,18 +47,14 @@ namespace dragonBones {
             this._renderDisplay = null as any;
             this._updateTransform = PIXI.VERSION[0] === "3" ? this._updateTransformV3 : this._updateTransformV4;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _initDisplay(value: any, isRetain: boolean): void {
             // tslint:disable-next-line:no-unused-expression
             value;
             // tslint:disable-next-line:no-unused-expression
             isRetain;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _disposeDisplay(value: any, isRelease: boolean): void {
             // tslint:disable-next-line:no-unused-expression
             value;
@@ -67,22 +62,16 @@ namespace dragonBones {
                 (value as PIXI.DisplayObject).destroy();
             }
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _onUpdateDisplay(): void {
             this._renderDisplay = (this._display ? this._display : this._rawDisplay) as PIXI.DisplayObject;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _addDisplay(): void {
             const container = this._armature.display as PixiArmatureDisplay;
             container.addChild(this._renderDisplay);
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _replaceDisplay(value: any): void {
             const container = this._armature.display as PixiArmatureDisplay;
             const prevDisplay = value as PIXI.DisplayObject;
@@ -91,15 +80,11 @@ namespace dragonBones {
             container.removeChild(prevDisplay);
             this._textureScale = 1.0;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _removeDisplay(): void {
             this._renderDisplay.parent.removeChild(this._renderDisplay);
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateZOrder(): void {
             const container = this._armature.display as PixiArmatureDisplay;
             const index = container.getChildIndex(this._renderDisplay);
@@ -110,14 +95,12 @@ namespace dragonBones {
             container.addChildAt(this._renderDisplay, this._zOrder);
         }
         /**
-         * @inheritDoc
+         * @internal
          */
         public _updateVisible(): void {
             this._renderDisplay.visible = this._parent.visible && this._visible;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateBlendMode(): void {
             if (this._renderDisplay instanceof PIXI.Sprite) {
                 switch (this._blendMode) {
@@ -163,27 +146,25 @@ namespace dragonBones {
             }
             // TODO child armature.
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateColor(): void {
-            this._renderDisplay.alpha = this._colorTransform.alphaMultiplier;
+            const alpha = this._colorTransform.alphaMultiplier * this._globalAlpha;
+            this._renderDisplay.alpha = alpha;
+
             if (this._renderDisplay instanceof PIXI.Sprite || this._renderDisplay instanceof PIXI.mesh.Mesh) {
                 const color = (Math.round(this._colorTransform.redMultiplier * 0xFF) << 16) + (Math.round(this._colorTransform.greenMultiplier * 0xFF) << 8) + Math.round(this._colorTransform.blueMultiplier * 0xFF);
                 this._renderDisplay.tint = color;
             }
             // TODO child armature.
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateFrame(): void {
-            const meshData = this._display === this._meshDisplay ? this._meshData : null;
             let currentTextureData = this._textureData as (PixiTextureData | null);
 
             if (this._displayIndex >= 0 && this._display !== null && currentTextureData !== null) {
                 let currentTextureAtlasData = currentTextureData.parent as PixiTextureAtlasData;
-                if (this._armature.replacedTexture !== null && this._rawDisplayDatas !== null && this._rawDisplayDatas.indexOf(this._displayData) >= 0) { // Update replaced texture atlas.
+
+                if (this._armature.replacedTexture !== null) { // Update replaced texture atlas.
                     if (this._armature._replaceTextureAtlasData === null) {
                         currentTextureAtlasData = BaseObject.borrowObject(PixiTextureAtlasData);
                         currentTextureAtlasData.copyFrom(currentTextureData.parent);
@@ -199,13 +180,13 @@ namespace dragonBones {
 
                 const renderTexture = currentTextureData.renderTexture;
                 if (renderTexture !== null) {
-                    if (meshData !== null) { // Mesh.
-                        const data = meshData.parent.parent.parent;
+                    if (this._geometryData !== null) { // Mesh.
+                        const data = this._geometryData.data;
                         const intArray = data.intArray;
                         const floatArray = data.floatArray;
-                        const vertexCount = intArray[meshData.offset + BinaryOffset.MeshVertexCount];
-                        const triangleCount = intArray[meshData.offset + BinaryOffset.MeshTriangleCount];
-                        let vertexOffset = intArray[meshData.offset + BinaryOffset.MeshFloatOffset];
+                        const vertexCount = intArray[this._geometryData.offset + BinaryOffset.GeometryVertexCount];
+                        const triangleCount = intArray[this._geometryData.offset + BinaryOffset.GeometryTriangleCount];
+                        let vertexOffset = intArray[this._geometryData.offset + BinaryOffset.GeometryFloatOffset];
 
                         if (vertexOffset < 0) {
                             vertexOffset += 65536; // Fixed out of bouds bug. 
@@ -215,31 +196,32 @@ namespace dragonBones {
                         const scale = this._armature._armatureData.scale;
 
                         const meshDisplay = this._renderDisplay as PIXI.mesh.Mesh;
-                        const textureAtlasWidth = currentTextureAtlasData.width > 0.0 ? currentTextureAtlasData.width : renderTexture.width;
-                        const textureAtlasHeight = currentTextureAtlasData.height > 0.0 ? currentTextureAtlasData.height : renderTexture.height;
+                        const textureAtlasWidth = currentTextureAtlasData.width > 0.0 ? currentTextureAtlasData.width : renderTexture.baseTexture.width;
+                        const textureAtlasHeight = currentTextureAtlasData.height > 0.0 ? currentTextureAtlasData.height : renderTexture.baseTexture.height;
+                        const region = currentTextureData.region;
 
                         meshDisplay.vertices = new Float32Array(vertexCount * 2) as any;
                         meshDisplay.uvs = new Float32Array(vertexCount * 2) as any;
                         meshDisplay.indices = new Uint16Array(triangleCount * 3) as any;
                         for (let i = 0, l = vertexCount * 2; i < l; ++i) {
                             meshDisplay.vertices[i] = floatArray[vertexOffset + i] * scale;
-                            meshDisplay.uvs[i] = floatArray[uvOffset + i];
                         }
 
                         for (let i = 0; i < triangleCount * 3; ++i) {
-                            meshDisplay.indices[i] = intArray[meshData.offset + BinaryOffset.MeshVertexIndices + i];
+                            meshDisplay.indices[i] = intArray[this._geometryData.offset + BinaryOffset.GeometryVertexIndices + i];
                         }
 
-                        for (let i = 0, l = meshDisplay.uvs.length; i < l; i += 2) {
-                            const u = meshDisplay.uvs[i];
-                            const v = meshDisplay.uvs[i + 1];
+                        for (let i = 0, l = vertexCount * 2; i < l; i += 2) {
+                            const u = floatArray[uvOffset + i];
+                            const v = floatArray[uvOffset + i + 1];
+
                             if (currentTextureData.rotated) {
-                                meshDisplay.uvs[i] = (currentTextureData.region.x + (1.0 - v) * currentTextureData.region.width) / textureAtlasWidth;
-                                meshDisplay.uvs[i + 1] = (currentTextureData.region.y + u * currentTextureData.region.height) / textureAtlasHeight;
+                                meshDisplay.uvs[i] = (region.x + (1.0 - v) * region.width) / textureAtlasWidth;
+                                meshDisplay.uvs[i + 1] = (region.y + u * region.height) / textureAtlasHeight;
                             }
                             else {
-                                meshDisplay.uvs[i] = (currentTextureData.region.x + u * currentTextureData.region.width) / textureAtlasWidth;
-                                meshDisplay.uvs[i + 1] = (currentTextureData.region.y + v * currentTextureData.region.height) / textureAtlasHeight;
+                                meshDisplay.uvs[i] = (region.x + u * region.width) / textureAtlasWidth;
+                                meshDisplay.uvs[i + 1] = (region.y + v * region.height) / textureAtlasHeight;
                             }
                         }
 
@@ -247,6 +229,12 @@ namespace dragonBones {
                         meshDisplay.texture = renderTexture as any;
                         meshDisplay.dirty++;
                         meshDisplay.indexDirty++;
+
+                        const isSkinned = this._geometryData.weight !== null;
+                        const isSurface = this._parent._boneData.type !== BoneType.Bone;
+                        if (isSkinned || isSurface) {
+                            this._identityTransform();
+                        }
                     }
                     else { // Normal texture.
                         this._textureScale = currentTextureData.parent.scale * this._armature._armatureData.scale;
@@ -260,7 +248,7 @@ namespace dragonBones {
                 }
             }
 
-            if (meshData !== null) {
+            if (this._geometryData !== null) {
                 const meshDisplay = this._renderDisplay as PIXI.mesh.Mesh;
                 meshDisplay.texture = null as any;
                 meshDisplay.x = 0.0;
@@ -275,29 +263,30 @@ namespace dragonBones {
                 normalDisplay.visible = false;
             }
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateMesh(): void {
             const scale = this._armature._armatureData.scale;
-            const meshData = this._meshData as MeshDisplayData;
-            const hasDeform = this._deformVertices.length > 0 && meshData.inheritDeform;
-            const weight = meshData.weight;
+            const deformVertices = (this._displayFrame as DisplayFrame).deformVertices;
+            const bones = this._geometryBones;
+            const geometryData = this._geometryData as GeometryData;
+            const weightData = geometryData.weight;
+
+            const hasDeform = deformVertices.length > 0 && geometryData.inheritDeform;
             const meshDisplay = this._renderDisplay as PIXI.mesh.Mesh;
 
-            if (weight !== null) {
-                const data = meshData.parent.parent.parent;
+            if (weightData !== null) {
+                const data = geometryData.data;
                 const intArray = data.intArray;
                 const floatArray = data.floatArray;
-                const vertexCount = intArray[meshData.offset + BinaryOffset.MeshVertexCount];
-                let weightFloatOffset = intArray[weight.offset + BinaryOffset.WeigthFloatOffset];
+                const vertexCount = intArray[geometryData.offset + BinaryOffset.GeometryVertexCount];
+                let weightFloatOffset = intArray[weightData.offset + BinaryOffset.WeigthFloatOffset];
 
                 if (weightFloatOffset < 0) {
                     weightFloatOffset += 65536; // Fixed out of bouds bug. 
                 }
 
                 for (
-                    let i = 0, iD = 0, iB = weight.offset + BinaryOffset.WeigthBoneIndices + weight.bones.length, iV = weightFloatOffset, iF = 0;
+                    let i = 0, iD = 0, iB = weightData.offset + BinaryOffset.WeigthBoneIndices + bones.length, iV = weightFloatOffset, iF = 0;
                     i < vertexCount;
                     ++i
                 ) {
@@ -306,7 +295,7 @@ namespace dragonBones {
 
                     for (let j = 0; j < boneCount; ++j) {
                         const boneIndex = intArray[iB++];
-                        const bone = this._meshBones[boneIndex];
+                        const bone = bones[boneIndex];
 
                         if (bone !== null) {
                             const matrix = bone.globalTransformMatrix;
@@ -315,8 +304,8 @@ namespace dragonBones {
                             let yL = floatArray[iV++] * scale;
 
                             if (hasDeform) {
-                                xL += this._deformVertices[iF++];
-                                yL += this._deformVertices[iF++];
+                                xL += deformVertices[iF++];
+                                yL += deformVertices[iF++];
                             }
 
                             xG += (matrix.a * xL + matrix.c * yL + matrix.tx) * weight;
@@ -328,22 +317,26 @@ namespace dragonBones {
                     meshDisplay.vertices[iD++] = yG;
                 }
             }
-            else if (hasDeform) {
+            else {
                 const isSurface = this._parent._boneData.type !== BoneType.Bone;
-                // const isGlue = meshData.glue !== null; TODO
-                const data = meshData.parent.parent.parent;
+                const data = geometryData.data;
                 const intArray = data.intArray;
                 const floatArray = data.floatArray;
-                const vertexCount = intArray[meshData.offset + BinaryOffset.MeshVertexCount];
-                let vertexOffset = intArray[meshData.offset + BinaryOffset.MeshFloatOffset];
+                const vertexCount = intArray[geometryData.offset + BinaryOffset.GeometryVertexCount];
+                let vertexOffset = intArray[geometryData.offset + BinaryOffset.GeometryFloatOffset];
 
                 if (vertexOffset < 0) {
                     vertexOffset += 65536; // Fixed out of bouds bug. 
                 }
 
                 for (let i = 0, l = vertexCount * 2; i < l; i += 2) {
-                    const x = floatArray[vertexOffset + i] * scale + this._deformVertices[i];
-                    const y = floatArray[vertexOffset + i + 1] * scale + this._deformVertices[i + 1];
+                    let x = floatArray[vertexOffset + i] * scale;
+                    let y = floatArray[vertexOffset + i + 1] * scale;
+
+                    if (hasDeform) {
+                        x += deformVertices[i];
+                        y += deformVertices[i + 1];
+                    }
 
                     if (isSurface) {
                         const matrix = (this._parent as Surface)._getGlobalTransformMatrix(x, y);
@@ -357,21 +350,11 @@ namespace dragonBones {
                 }
             }
         }
-        /**
-         * @inheritDoc
-         */
-        public _updateGlueMesh(): void {
-            // TODO
-        }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateTransform(): void {
             throw new Error();
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateTransformV3(): void {
             this.updateGlobalTransform(); // Update transform.
 
@@ -394,9 +377,7 @@ namespace dragonBones {
                 this._renderDisplay.scale.set(transform.scaleX, transform.scaleY);
             }
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _updateTransformV4(): void {
             this.updateGlobalTransform(); // Update transform.
 
@@ -419,9 +400,7 @@ namespace dragonBones {
                 this._renderDisplay.scale.set(transform.scaleX, transform.scaleY);
             }
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _identityTransform(): void {
             this._renderDisplay.setTransform(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0);
         }

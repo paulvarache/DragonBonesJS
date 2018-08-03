@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+declare const _super: any;
 namespace dragonBones {
     /**
      * @private
@@ -504,10 +505,7 @@ namespace dragonBones {
         private _clipNames: string[] = [];
         private _slots: MovieSlot[] = [];
         private _childMovies: Movie[] = [];
-        /**
-         * @internal
-         * @private
-         */
+
         public constructor(createMovieHelper: any) {
             super();
 
@@ -747,14 +745,7 @@ namespace dragonBones {
                         const height = this._groupConfig.rectangleArray[regionIndex + 3];
 
                         slot.displayConfig.texture = new egret.Texture();
-
-                        if (EgretFactory._isV5) {
-                            (slot.displayConfig.texture as any)["$bitmapData"] = (textureAtlasTexture as any)["$bitmapData"];
-                        }
-                        else {
-                            slot.displayConfig.texture._bitmapData = textureAtlasTexture._bitmapData;
-                        }
-
+                        slot.displayConfig.texture.bitmapData = textureAtlasTexture.bitmapData;
                         slot.displayConfig.texture.$initData(
                             x, y,
                             Math.min(width, textureAtlasTexture.textureWidth - x), Math.min(height, textureAtlasTexture.textureHeight - y),
@@ -770,30 +761,30 @@ namespace dragonBones {
                         const bitmapNode = slot.rawDisplay.$renderNode as egret.sys.BitmapNode;
                         egret.sys.RenderNode.prototype.cleanBeforeRender.call(slot.rawDisplay.$renderNode);
 
-                        if (EgretFactory._isV5) {
-                            bitmapNode.image = (texture as any)["$bitmapData"];
+                        bitmapNode.image = texture.bitmapData;
+
+                        if (isV5) {
                             bitmapNode.drawImage(
-                                (texture as any).$bitmapX, (texture as any).$bitmapY,
-                                (texture as any).$bitmapWidth, (texture as any).$bitmapHeight,
-                                (texture as any).$offsetX, (texture as any).$offsetY,
+                                texture.$bitmapX, texture.$bitmapY,
+                                texture.$bitmapWidth, texture.$bitmapHeight,
+                                texture.$offsetX, texture.$offsetY,
                                 texture.textureWidth, texture.textureHeight
                             );
 
-                            bitmapNode.imageWidth = (texture as any)._sourceWidth;
-                            bitmapNode.imageHeight = (texture as any)._sourceHeight;
+                            bitmapNode.imageWidth = texture.$sourceWidth;
+                            bitmapNode.imageHeight = texture.$sourceHeight;
                         }
                         else {
-                            bitmapNode.image = texture._bitmapData;
-
+                            const textureV4 = texture as any;
                             bitmapNode.drawImage(
-                                texture._bitmapX, texture._bitmapY,
-                                texture._bitmapWidth, texture._bitmapHeight,
-                                texture._offsetX, texture._offsetY,
+                                textureV4._bitmapX, textureV4._bitmapY,
+                                textureV4._bitmapWidth, textureV4._bitmapHeight,
+                                textureV4._offsetX, textureV4._offsetY,
                                 texture.textureWidth, texture.textureHeight
                             );
 
-                            bitmapNode.imageWidth = texture._sourceWidth;
-                            bitmapNode.imageHeight = texture._sourceHeight;
+                            bitmapNode.imageWidth = textureV4._sourceWidth;
+                            bitmapNode.imageHeight = textureV4._sourceHeight;
                         }
                     }
                     else {
@@ -857,6 +848,18 @@ namespace dragonBones {
             else {
                 // Classic display.
                 super.$render();
+            }
+        }
+        /**
+         * @inheritDoc
+         */
+        $updateRenderNode(): void {
+            if (this._batchEnabled) {
+                // RenderNode display.
+            }
+            else {
+                // Classic display.
+                super.$updateRenderNode();
             }
         }
         /**
@@ -1114,7 +1117,9 @@ namespace dragonBones {
                             this._cacheRectangle.height = prevCacheRectangle.height;
                         }
 
-                        this.$invalidateContentBounds();
+                        if (!isV5) {
+                            (this as any).$invalidateContentBounds();
+                        }
                     }
                 }
 
@@ -1426,20 +1431,6 @@ namespace dragonBones {
             this._clock = value;
             if (this._clock) {
                 this._clock.add(this);
-            }
-        }
-
-        /**
-         * 已废弃，请参考 {@link dragonBones.Movie#clock} {@link dragonBones.Movie#clock} {@link dragonBones.EgretFactory#clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public advanceTimeBySelf(on: boolean): void {
-            if (on) {
-                this.clock = EgretFactory.clock;
-            }
-            else {
-                this.clock = null;
             }
         }
 

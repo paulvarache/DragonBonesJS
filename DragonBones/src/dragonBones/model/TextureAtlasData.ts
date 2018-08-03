@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -74,9 +74,7 @@ namespace dragonBones {
          * @private
          */
         public readonly textures: Map<TextureData> = {};
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             for (let k in this.textures) {
                 this.textures[k].returnToPool();
@@ -117,12 +115,10 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public abstract createTexture(): TextureData;
         /**
          * @internal
-         * @private
          */
         public addTexture(value: TextureData): void {
             if (value.name in this.textures) {
@@ -136,12 +132,11 @@ namespace dragonBones {
         /**
          * @private
          */
-        public getTexture(name: string): TextureData | null {
-            return name in this.textures ? this.textures[name] : null;
+        public getTexture(textureName: string): TextureData | null {
+            return textureName in this.textures ? this.textures[textureName] : null;
         }
     }
     /**
-     * @internal
      * @private
      */
     export abstract class TextureData extends BaseObject {

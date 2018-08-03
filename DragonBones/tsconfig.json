@@ -3,6 +3,7 @@
 		"watch": false,
 		"sourceMap": false,
 		"declaration": true,
+        "stripInternal": true,
 		"alwaysStrict": true,
 		"noImplicitAny": true,
 		"noImplicitThis": true,
@@ -24,7 +25,6 @@
 		"out"
 	],
 	"files": [
-		"./src/dragonBones/modules.ts",
 		"./src/dragonBones/core/DragonBones.ts",
 		"./src/dragonBones/core/BaseObject.ts",
 
@@ -45,7 +45,7 @@
 		"./src/dragonBones/model/AnimationData.ts",
 		"./src/dragonBones/model/AnimationConfig.ts",
 		"./src/dragonBones/model/TextureAtlasData.ts",
-
+		
 		"./src/dragonBones/armature/IArmatureProxy.ts",
 		"./src/dragonBones/armature/Armature.ts",
 		"./src/dragonBones/armature/TransformObject.ts",

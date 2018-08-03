@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace dragonBones {
     /**
      * - The Hilo factory.
@@ -73,17 +74,13 @@ namespace dragonBones {
 
             this._dragonBones = HiloFactory._dragonBonesInstance;
         }
-        /**
-         * @private
-         */
+        
         protected _isSupportMesh(): boolean {
             console.warn("Hilo can not support mesh.");
 
             return false;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _buildTextureAtlasData(textureAtlasData: HiloTextureAtlasData | null, textureAtlas: HTMLImageElement | null): HiloTextureAtlasData {
             if (textureAtlasData) {
                 textureAtlasData.renderTexture = textureAtlas;
@@ -94,9 +91,7 @@ namespace dragonBones {
 
             return textureAtlasData;
         }
-        /**
-         * @inheritDoc
-         */
+
         protected _buildArmature(dataPackage: BuildArmaturePackage): Armature {
             const armature = BaseObject.borrowObject(Armature);
             const armatureDisplay = new HiloArmatureDisplay(null as any);
@@ -108,10 +103,8 @@ namespace dragonBones {
 
             return armature;
         }
-        /**
-         * @inheritDoc
-         */
-        protected _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, displays: Array<DisplayData | null> | null, armature: Armature): Slot {
+
+        protected _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, armature: Armature): Slot {
             // tslint:disable-next-line:no-unused-expression
             dataPackage;
             // tslint:disable-next-line:no-unused-expression
@@ -121,7 +114,7 @@ namespace dragonBones {
             const rawDisplay = new Hilo.Bitmap(null as any);
 
             slot.init(
-                slotData, displays,
+                slotData, armature,
                 rawDisplay, rawDisplay
             );
 
@@ -207,20 +200,6 @@ namespace dragonBones {
          */
         public get soundEventManager(): HiloArmatureDisplay {
             return this._dragonBones.eventManager as HiloArmatureDisplay;
-        }
-
-        /**
-         * - Deprecated, please refer to {@link #clock}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public static get clock(): WorldClock {
-            return HiloFactory.factory.clock;
         }
     }
 }

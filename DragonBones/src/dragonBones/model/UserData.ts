@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -68,9 +68,7 @@ namespace dragonBones {
          * @language zh_CN
          */
         public readonly strings: Array<string> = [];
-        /**
-         * @inheritDoc
-         */
+
         protected _onClear(): void {
             this.ints.length = 0;
             this.floats.length = 0;
@@ -78,21 +76,18 @@ namespace dragonBones {
         }
         /**
          * @internal
-         * @private
          */
         public addInt(value: number): void {
             this.ints.push(value);
         }
         /**
          * @internal
-         * @private
          */
         public addFloat(value: number): void {
             this.floats.push(value);
         }
         /**
          * @internal
-         * @private
          */
         public addString(value: string): void {
             this.strings.push(value);
@@ -138,7 +133,6 @@ namespace dragonBones {
         }
     }
     /**
-     * @internal
      * @private
      */
     export class ActionData extends BaseObject {

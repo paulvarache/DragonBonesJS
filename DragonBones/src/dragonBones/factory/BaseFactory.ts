@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -44,33 +44,16 @@ namespace dragonBones {
      * @language zh_CN
      */
     export abstract class BaseFactory {
-        /**
-         * @private
-         */
         protected static _objectParser: ObjectDataParser = null as any;
-        /**
-         * @private
-         */
         protected static _binaryParser: BinaryDataParser = null as any;
         /**
          * @private
          */
         public autoSearch: boolean = false;
-        /**
-         * @private
-         */
+
         protected readonly _dragonBonesDataMap: Map<DragonBonesData> = {};
-        /**
-         * @private
-         */
         protected readonly _textureAtlasDataMap: Map<Array<TextureAtlasData>> = {};
-        /**
-         * @private
-         */
         protected _dragonBones: DragonBones = null as any;
-        /**
-         * @private
-         */
         protected _dataParser: DataParser = null as any;
         /**
          * - Create a factory instance. (typically only one global factory instance is required)
@@ -93,15 +76,11 @@ namespace dragonBones {
 
             this._dataParser = dataParser !== null ? dataParser : BaseFactory._objectParser;
         }
-        /**
-         * @private
-         */
+
         protected _isSupportMesh(): boolean {
             return true;
         }
-        /**
-         * @private
-         */
+
         protected _getTextureData(textureAtlasName: string, textureName: string): TextureData | null {
             if (textureAtlasName in this._textureAtlasDataMap) {
                 for (const textureAtlasData of this._textureAtlasDataMap[textureAtlasName]) {
@@ -127,9 +106,7 @@ namespace dragonBones {
 
             return null;
         }
-        /**
-         * @private
-         */
+
         protected _fillBuildArmaturePackage(
             dataPackage: BuildArmaturePackage,
             dragonBonesName: string, armatureName: string, skinName: string, textureAtlasName: string
@@ -187,29 +164,11 @@ namespace dragonBones {
 
             return false;
         }
-        /**
-         * @private
-         */
+
         protected _buildBones(dataPackage: BuildArmaturePackage, armature: Armature): void {
             for (const boneData of dataPackage.armature.sortedBones) {
                 const bone = BaseObject.borrowObject(boneData.type === BoneType.Bone ? Bone : Surface);
-                bone.init(boneData);
-
-                if (boneData.parent !== null) {
-                    armature.addBone(bone, boneData.parent.name);
-                }
-                else {
-                    armature.addBone(bone, "");
-                }
-            }
-
-            const constraints = dataPackage.armature.constraints;
-            for (let k in constraints) {
-                const constraintData = constraints[k];
-                // TODO more constraint type.
-                const constraint = BaseObject.borrowObject(IKConstraint);
-                constraint.init(constraintData, armature);
-                armature.addConstraint(constraint);
+                bone.init(boneData, armature);
             }
         }
         /**
@@ -236,43 +195,67 @@ namespace dragonBones {
             }
 
             for (const slotData of dataPackage.armature.sortedSlots) {
-                const displays = slotData.name in skinSlots ? skinSlots[slotData.name] : null;
-                const slot = this._buildSlot(dataPackage, slotData, displays, armature);
-                armature.addSlot(slot, slotData.parent.name);
+                const displayDatas = slotData.name in skinSlots ? skinSlots[slotData.name] : null;
+                const slot = this._buildSlot(dataPackage, slotData, armature);
 
-                if (displays !== null) {
-                    const displayList = new Array<any>();
-
-                    // for (const displayData of displays) 
-                    for (let i = 0, l = DragonBones.webAssembly ? (displays as any).size() : displays.length; i < l; ++i) {
-                        const displayData = DragonBones.webAssembly ? (displays as any).get(i) : displays[i];
+                if (displayDatas !== null) {
+                    slot.displayFrameCount = displayDatas.length;
+                    for (let i = 0, l = slot.displayFrameCount; i < l; ++i) {
+                        const displayData = displayDatas[i];
+                        slot.replaceRawDisplayData(displayData, i);
 
                         if (displayData !== null) {
-                            displayList.push(this._getSlotDisplay(dataPackage, displayData, null, slot));
+                            if (dataPackage.textureAtlasName.length > 0) {
+                                const textureData = this._getTextureData(dataPackage.textureAtlasName, displayData.path);
+                                slot.replaceTextureData(textureData, i);
+                            }
+
+                            const display = this._getSlotDisplay(dataPackage, displayData, slot);
+                            slot.replaceDisplay(display, i);
                         }
                         else {
-                            displayList.push(null);
+                            slot.replaceDisplay(null);
                         }
                     }
-
-                    slot._setDisplayList(displayList);
                 }
 
                 slot._setDisplayIndex(slotData.displayIndex, true);
             }
         }
-        /**
-         * @private
-         */
-        protected _buildChildArmature(dataPackage: BuildArmaturePackage | null, slot: Slot, displayData: DisplayData): Armature | null {
-            // tslint:disable-next-line:no-unused-expression
-            slot;
+
+        protected _buildConstraints(dataPackage: BuildArmaturePackage, armature: Armature): void {
+            const constraints = dataPackage.armature.constraints;
+            for (let k in constraints) {
+                const constraintData = constraints[k];
+                // TODO more constraint type.
+                switch (constraintData.type) {
+                    case ConstraintType.IK:
+                        const ikConstraint = BaseObject.borrowObject(IKConstraint);
+                        ikConstraint.init(constraintData, armature);
+                        armature._addConstraint(ikConstraint);
+                        break;
+
+                    case ConstraintType.Path:
+                        const pathConstraint = BaseObject.borrowObject(PathConstraint);
+                        pathConstraint.init(constraintData, armature);
+                        armature._addConstraint(pathConstraint);
+                        break;
+
+                    default:
+                        const constraint = BaseObject.borrowObject(IKConstraint);
+                        constraint.init(constraintData, armature);
+                        armature._addConstraint(constraint);
+                        break;
+                }
+
+            }
+        }
+
+        protected _buildChildArmature(dataPackage: BuildArmaturePackage | null, _slot: Slot, displayData: ArmatureDisplayData): Armature | null {
             return this.buildArmature(displayData.path, dataPackage !== null ? dataPackage.dataName : "", "", dataPackage !== null ? dataPackage.textureAtlasName : "");
         }
-        /**
-         * @private
-         */
-        protected _getSlotDisplay(dataPackage: BuildArmaturePackage | null, displayData: DisplayData, rawDisplayData: DisplayData | null, slot: Slot): any {
+
+        protected _getSlotDisplay(dataPackage: BuildArmaturePackage | null, displayData: DisplayData, slot: Slot): any {
             const dataName = dataPackage !== null ? dataPackage.dataName : displayData.parent.parent.parent.name;
             let display: any = null;
             switch (displayData.type) {
@@ -281,16 +264,8 @@ namespace dragonBones {
                     if (imageDisplayData.texture === null) {
                         imageDisplayData.texture = this._getTextureData(dataName, displayData.path);
                     }
-                    else if (dataPackage !== null && dataPackage.textureAtlasName.length > 0) {
-                        imageDisplayData.texture = this._getTextureData(dataPackage.textureAtlasName, displayData.path);
-                    }
 
-                    if (rawDisplayData !== null && rawDisplayData.type === DisplayType.Mesh && this._isSupportMesh()) {
-                        display = slot.meshDisplay;
-                    }
-                    else {
-                        display = slot.rawDisplay;
-                    }
+                    display = slot.rawDisplay;
                     break;
                 }
 
@@ -298,9 +273,6 @@ namespace dragonBones {
                     const meshDisplayData = displayData as MeshDisplayData;
                     if (meshDisplayData.texture === null) {
                         meshDisplayData.texture = this._getTextureData(dataName, meshDisplayData.path);
-                    }
-                    else if (dataPackage !== null && dataPackage.textureAtlasName.length > 0) {
-                        meshDisplayData.texture = this._getTextureData(dataPackage.textureAtlasName, meshDisplayData.path);
                     }
 
                     if (this._isSupportMesh()) {
@@ -314,14 +286,17 @@ namespace dragonBones {
 
                 case DisplayType.Armature: {
                     const armatureDisplayData = displayData as ArmatureDisplayData;
-                    const childArmature = this._buildChildArmature(dataPackage, slot, displayData);
+                    const childArmature = this._buildChildArmature(dataPackage, slot, armatureDisplayData);
                     if (childArmature !== null) {
                         childArmature.inheritAnimation = armatureDisplayData.inheritAnimation;
                         if (!childArmature.inheritAnimation) {
                             const actions = armatureDisplayData.actions.length > 0 ? armatureDisplayData.actions : childArmature.armatureData.defaultActions;
                             if (actions.length > 0) {
                                 for (const action of actions) {
-                                    childArmature._bufferAction(action, true);
+                                    const eventObject = BaseObject.borrowObject(EventObject);
+                                    EventObject.actionDataToInstance(action, eventObject, slot.armature);
+                                    eventObject.slot = slot;
+                                    slot.armature._bufferAction(eventObject, false);
                                 }
                             }
                             else {
@@ -345,18 +320,10 @@ namespace dragonBones {
 
             return display;
         }
-        /**
-         * @private
-         */
+
         protected abstract _buildTextureAtlasData(textureAtlasData: TextureAtlasData | null, textureAtlas: any): TextureAtlasData;
-        /**
-         * @private
-         */
         protected abstract _buildArmature(dataPackage: BuildArmaturePackage): Armature;
-        /**
-         * @private
-         */
-        protected abstract _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, displays: Array<DisplayData | null> | null, armature: Armature): Slot;
+        protected abstract _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, armature: Armature): Slot;
         /**
          * - Parse the raw data to a DragonBonesData instance and cache it to the factory.
          * @param rawData - The raw data.
@@ -441,9 +408,20 @@ namespace dragonBones {
             return textureAtlasData;
         }
         /**
-         * @private
+         * - Update texture atlases.
+         * @param textureAtlases - The texture atlas objects.
+         * @param name - The texture atlas name.
+         * @version DragonBones 5.7
+         * @language en_US
          */
-        public updateTextureAtlasData(name: string, textureAtlases: Array<any>): void {
+        /**
+         * - 更新贴图集对象。
+         * @param textureAtlases - 多个贴图集对象。
+         * @param name - 贴图集名称。
+         * @version DragonBones 5.7
+         * @language zh_CN
+         */
+        public updateTextureAtlases(textureAtlases: Array<any>, name: string): void {
             const textureAtlasDatas = this.getTextureAtlasData(name);
             if (textureAtlasDatas !== null) {
                 for (let i = 0, l = textureAtlasDatas.length; i < l; ++i) {
@@ -688,6 +666,7 @@ namespace dragonBones {
         }
         /**
          * - Create a armature from cached DragonBonesData instances and TextureAtlasData instances.
+         * Note that when the created armature that is no longer in use, you need to explicitly dispose {@link #dragonBones.Armature#dispose()}.
          * @param armatureName - The armature data name.
          * @param dragonBonesName - The cached name of the DragonBonesData instance. (If not set, all DragonBonesData instances are retrieved, and when multiple DragonBonesData instances contain a the same name armature data, it may not be possible to accurately create a specific armature)
          * @param skinName - The skin name, you can set a different ArmatureData name to share it's skin data. (If not set, use the default skin data)
@@ -699,15 +678,15 @@ namespace dragonBones {
          * </pre>
          * @see dragonBones.DragonBonesData
          * @see dragonBones.ArmatureData
-         * @see dragonBones.Armature
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 通过缓存的 DragonBonesData 实例和 TextureAtlasData 实例创建一个骨架。
+         * 注意，创建的骨架不再使用时，需要显式释放 {@link #dragonBones.Armature#dispose()}。
          * @param armatureName - 骨架数据名称。
          * @param dragonBonesName - DragonBonesData 实例的缓存名称。 （如果未设置，将检索所有的 DragonBonesData 实例，当多个 DragonBonesData 实例中包含同名的骨架数据时，可能无法准确的创建出特定的骨架）
-         * @param skinName - 皮肤名称，可以设置一个其他骨架数据名称来共享其皮肤数据（如果未设置，则使用默认的皮肤数据）。
+         * @param skinName - 皮肤名称，可以设置一个其他骨架数据名称来共享其皮肤数据。（如果未设置，则使用默认的皮肤数据）
          * @returns 骨架。
          * @example
          * <pre>
@@ -716,7 +695,6 @@ namespace dragonBones {
          * </pre>
          * @see dragonBones.DragonBonesData
          * @see dragonBones.ArmatureData
-         * @see dragonBones.Armature
          * @version DragonBones 3.0
          * @language zh_CN
          */
@@ -730,6 +708,7 @@ namespace dragonBones {
             const armature = this._buildArmature(dataPackage);
             this._buildBones(dataPackage, armature);
             this._buildSlots(dataPackage, armature);
+            this._buildConstraints(dataPackage, armature);
             armature.invalidUpdate(null, true);
             armature.advanceTime(0.0); // Update armature pose.
 
@@ -738,7 +717,7 @@ namespace dragonBones {
         /**
          * @private
          */
-        public replaceDisplay(slot: Slot, displayData: DisplayData, displayIndex: number = -1): void {
+        public replaceDisplay(slot: Slot, displayData: DisplayData | null, displayIndex: number = -1): void {
             if (displayIndex < 0) {
                 displayIndex = slot.displayIndex;
             }
@@ -749,46 +728,23 @@ namespace dragonBones {
 
             slot.replaceDisplayData(displayData, displayIndex);
 
-            const displayList = slot.displayList; // Copy.
-            if (displayList.length <= displayIndex) {
-                displayList.length = displayIndex + 1;
-
-                for (let i = 0, l = displayList.length; i < l; ++i) { // Clean undefined.
-                    if (!displayList[i]) {
-                        displayList[i] = null;
-                    }
-                }
-            }
-
             if (displayData !== null) {
-                const rawDisplayDatas = slot.rawDisplayDatas;
-                let rawDisplayData: DisplayData | null = null;
-
-                if (rawDisplayDatas) {
-                    if (DragonBones.webAssembly) {
-                        if (displayIndex < (rawDisplayDatas as any).size()) {
-                            rawDisplayData = (rawDisplayDatas as any).get(displayIndex);
-                        }
-                    }
-                    else {
-                        if (displayIndex < rawDisplayDatas.length) {
-                            rawDisplayData = rawDisplayDatas[displayIndex];
-                        }
+                let display = this._getSlotDisplay(null, displayData, slot);
+                if (displayData.type === DisplayType.Image) {
+                    const rawDisplayData = slot.getDisplayFrameAt(displayIndex).rawDisplayData;
+                    if (
+                        rawDisplayData !== null &&
+                        rawDisplayData.type === DisplayType.Mesh
+                    ) {
+                        display = slot.meshDisplay;
                     }
                 }
 
-                displayList[displayIndex] = this._getSlotDisplay(
-                    null,
-                    displayData,
-                    rawDisplayData,
-                    slot
-                );
+                slot.replaceDisplay(display, displayIndex);
             }
             else {
-                displayList[displayIndex] = null;
+                slot.replaceDisplay(null, displayIndex);
             }
-
-            slot.displayList = displayList;
         }
         /**
          * - Replaces the current display data for a particular slot with a specific display data.
@@ -829,15 +785,11 @@ namespace dragonBones {
             slot: Slot, displayIndex: number = -1
         ): boolean {
             const armatureData = this.getArmatureData(armatureName, dragonBonesName || "");
-            if (!armatureData || !armatureData.defaultSkin) {
+            if (armatureData === null || armatureData.defaultSkin === null) {
                 return false;
             }
 
             const displayData = armatureData.defaultSkin.getDisplay(slotName, displayName);
-            if (!displayData) {
-                return false;
-            }
-
             this.replaceDisplay(slot, displayData, displayIndex);
 
             return true;
@@ -854,16 +806,15 @@ namespace dragonBones {
                 return false;
             }
 
-            const displays = armatureData.defaultSkin.getDisplays(slotName);
-            if (!displays) {
+            const displayDatas = armatureData.defaultSkin.getDisplays(slotName);
+            if (!displayDatas) {
                 return false;
             }
 
-            let displayIndex = 0;
-            // for (const displayData of displays) 
-            for (let i = 0, l = DragonBones.webAssembly ? (displays as any).size() : displays.length; i < l; ++i) {
-                const displayData = DragonBones.webAssembly ? (displays as any).get(i) : displays[i];
-                this.replaceDisplay(slot, displayData, displayIndex++);
+            slot.displayFrameCount = displayDatas.length;
+            for (let i = 0, l = slot.displayFrameCount; i < l; ++i) {
+                const displayData = displayDatas[i];
+                this.replaceDisplay(slot, displayData, i);
             }
 
             return true;
@@ -915,38 +866,34 @@ namespace dragonBones {
                     continue;
                 }
 
-                let displays = skin.getDisplays(slot.name);
-                if (!displays) {
+                let displayDatas = skin.getDisplays(slot.name);
+                if (displayDatas === null) {
                     if (defaultSkin !== null && skin !== defaultSkin) {
-                        displays = defaultSkin.getDisplays(slot.name);
+                        displayDatas = defaultSkin.getDisplays(slot.name);
                     }
 
-                    if (!displays) {
+                    if (displayDatas === null) {
                         if (isOverride) {
-                            slot.rawDisplayDatas = null;
-                            slot.displayList = []; //
+                            slot.displayFrameCount = 0;
                         }
                         continue;
                     }
                 }
 
-                const displayCount = DragonBones.webAssembly ? (displays as any).size() : displays.length;
-                const displayList = slot.displayList; // Copy.
-                displayList.length = displayCount; // Modify displayList length.
+                slot.displayFrameCount = displayDatas.length;
+                for (let i = 0, l = slot.displayFrameCount; i < l; ++i) {
+                    const displayData = displayDatas[i];
+                    slot.replaceRawDisplayData(displayData, i);
 
-                for (let i = 0, l = displayCount; i < l; ++i) {
-                    const displayData = DragonBones.webAssembly ? (displays as any).get(i) : displays[i];
                     if (displayData !== null) {
-                        displayList[i] = this._getSlotDisplay(null, displayData, null, slot);
+                        slot.replaceDisplay(this._getSlotDisplay(null, displayData, slot), i);
                     }
                     else {
-                        displayList[i] = null;
+                        slot.replaceDisplay(null, i);
                     }
                 }
 
                 success = true;
-                slot.rawDisplayDatas = displays;
-                slot.displayList = displayList;
             }
 
             return success;
@@ -975,7 +922,7 @@ namespace dragonBones {
          * 这样就能实现制作一个骨架动画模板，让其他没有制作动画的骨架共享该动画。
          * @param armature - 骨架。
          * @param armatureData - 骨架数据。
-         * @param isOverride - 是否完全覆盖原来的动画。（默认: false）。
+         * @param isOverride - 是否完全覆盖原来的动画。（默认: false）
          * @example
          * <pre>
          *     let armatureA = factory.buildArmature("armatureA", "dragonBonesA");
@@ -1018,8 +965,8 @@ namespace dragonBones {
                 for (const display of slot.displayList) {
                     if (display instanceof Armature) {
                         const displayDatas = skinData.getDisplays(slot.name);
-                        if (displayDatas !== null && index < (DragonBones.webAssembly ? (displayDatas as any).size() : displayDatas.length)) {
-                            const displayData = DragonBones.webAssembly ? (displayDatas as any).get(index) : displayDatas[index];
+                        if (displayDatas !== null && index < displayDatas.length) {
+                            const displayData = displayDatas[index];
                             if (displayData !== null && displayData.type === DisplayType.Armature) {
                                 const childArmatureData = this.getArmatureData(displayData.path, displayData.parent.parent.parent.name);
                                 if (childArmatureData) {
@@ -1066,48 +1013,8 @@ namespace dragonBones {
         public get dragonBones(): DragonBones {
             return this._dragonBones;
         }
-
-        /**
-         * - Deprecated, please refer to {@link #replaceSkin}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #replaceSkin}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public changeSkin(armature: Armature, skin: SkinData, exclude: Array<string> | null = null): boolean {
-            return this.replaceSkin(armature, skin, false, exclude);
-        }
-        /**
-         * - Deprecated, please refer to {@link #replaceAnimation}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #replaceAnimation}。
-         * @deprecated
-         * @language zh_CN
-         */
-        public copyAnimationsToArmature(
-            toArmature: Armature,
-            fromArmatreName: string, fromSkinName: string = "", fromDragonBonesDataName: string = "",
-            replaceOriginalAnimation: boolean = true
-        ): boolean {
-            // tslint:disable-next-line:no-unused-expression
-            fromSkinName;
-
-            const armatureData = this.getArmatureData(fromArmatreName, fromDragonBonesDataName);
-            if (!armatureData) {
-                return false;
-            }
-
-            return this.replaceAnimation(toArmature, armatureData, replaceOriginalAnimation);
-        }
     }
     /**
-     * @internal
      * @private
      */
     export class BuildArmaturePackage {

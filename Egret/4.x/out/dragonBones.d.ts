@@ -1,19 +1,7 @@
-declare namespace dragonBones {
-    /**
-     * @internal
-     * @private
-     */
-    const webAssemblyModule: {
-        HEAP16: Int16Array;
-        _malloc(byteSize: number): number;
-        _free(pointer: number): void;
-        setDataBinary(data: DragonBonesData, binaryPointer: number, intBytesLength: number, floatBytesLength: number, frameIntBytesLength: number, frameFloatBytesLength: number, frameBytesLength: number, timelineBytesLength: number): void;
-    };
-}
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -34,18 +22,17 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
     const enum BinaryOffset {
         WeigthBoneCount = 0,
         WeigthFloatOffset = 1,
         WeigthBoneIndices = 2,
-        MeshVertexCount = 0,
-        MeshTriangleCount = 1,
-        MeshFloatOffset = 2,
-        MeshWeightOffset = 3,
-        MeshVertexIndices = 4,
+        GeometryVertexCount = 0,
+        GeometryTriangleCount = 1,
+        GeometryFloatOffset = 2,
+        GeometryWeightOffset = 3,
+        GeometryVertexIndices = 4,
         TimelineScale = 0,
         TimelineOffset = 1,
         TimelineKeyFrameCount = 2,
@@ -56,14 +43,13 @@ declare namespace dragonBones {
         FrameTweenType = 1,
         FrameTweenEasingOrCurveSampleCount = 2,
         FrameCurveSamples = 3,
-        DeformMeshOffset = 0,
+        DeformVertexOffset = 0,
         DeformCount = 1,
         DeformValueCount = 2,
         DeformValueOffset = 3,
         DeformFloatOffset = 4,
     }
     /**
-     * @internal
      * @private
      */
     const enum ArmatureType {
@@ -72,7 +58,6 @@ declare namespace dragonBones {
         Stage = 2,
     }
     /**
-     * @internal
      * @private
      */
     const enum BoneType {
@@ -87,6 +72,7 @@ declare namespace dragonBones {
         Armature = 1,
         Mesh = 2,
         BoundingBox = 3,
+        Path = 4,
     }
     /**
      * - Bounding box type.
@@ -104,7 +90,6 @@ declare namespace dragonBones {
         Polygon = 2,
     }
     /**
-     * @internal
      * @private
      */
     const enum ActionType {
@@ -113,7 +98,6 @@ declare namespace dragonBones {
         Sound = 11,
     }
     /**
-     * @internal
      * @private
      */
     const enum BlendMode {
@@ -133,7 +117,6 @@ declare namespace dragonBones {
         Subtract = 13,
     }
     /**
-     * @internal
      * @private
      */
     const enum TweenType {
@@ -145,7 +128,6 @@ declare namespace dragonBones {
         QuadInOut = 5,
     }
     /**
-     * @internal
      * @private
      */
     const enum TimelineType {
@@ -156,12 +138,16 @@ declare namespace dragonBones {
         BoneRotate = 12,
         BoneScale = 13,
         Surface = 50,
+        BoneAlpha = 60,
         SlotDisplay = 20,
         SlotColor = 21,
-        SlotFFD = 22,
+        SlotDeform = 22,
+        SlotZIndex = 23,
+        SlotAlpha = 24,
         IKConstraint = 30,
-        AnimationTime = 40,
+        AnimationProgress = 40,
         AnimationWeight = 41,
+        AnimationParameter = 42,
     }
     /**
      * - Offset mode.
@@ -189,15 +175,6 @@ declare namespace dragonBones {
      * @language zh_CN
      */
     const enum AnimationFadeOutMode {
-        /**
-         * - Do not fade out of any animation states.
-         * @language en_US
-         */
-        /**
-         * - 不淡出任何的动画状态。
-         * @language zh_CN
-         */
-        None = 0,
         /**
          * - Fade out the animation states of the same layer.
          * @language en_US
@@ -247,6 +224,50 @@ declare namespace dragonBones {
     /**
      * @private
      */
+    const enum AnimationBlendType {
+        None = 0,
+        E1D = 1,
+    }
+    /**
+     * @private
+     */
+    const enum AnimationBlendMode {
+        Additive = 0,
+        Override = 1,
+    }
+    /**
+     * @private
+     */
+    const enum ConstraintType {
+        IK = 0,
+        Path = 1,
+    }
+    /**
+     * @private
+     */
+    const enum PositionMode {
+        Fixed = 0,
+        Percent = 1,
+    }
+    /**
+     * @private
+     */
+    const enum SpacingMode {
+        Length = 0,
+        Fixed = 1,
+        Percent = 2,
+    }
+    /**
+     * @private
+     */
+    const enum RotateMode {
+        Tangent = 0,
+        Chain = 1,
+        ChainScale = 2,
+    }
+    /**
+     * @private
+     */
     interface Map<T> {
         [key: string]: T;
     }
@@ -258,7 +279,6 @@ declare namespace dragonBones {
         static yDown: boolean;
         static debug: boolean;
         static debugDraw: boolean;
-        static webAssembly: boolean;
         private readonly _clock;
         private readonly _events;
         private readonly _objects;
@@ -271,10 +291,14 @@ declare namespace dragonBones {
         readonly eventManager: IEventDispatcher;
     }
 }
+
+declare var exports: any;
+declare var module: any;
+declare var define: any;
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -368,9 +392,6 @@ declare namespace dragonBones {
          */
         readonly hashCode: number;
         private _isInPool;
-        /**
-         * @private
-         */
         protected abstract _onClear(): void;
         /**
          * - Clear the object and return it back to object pool。
@@ -388,7 +409,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -583,7 +604,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -742,7 +763,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -763,7 +784,6 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
     class ColorTransform {
@@ -783,7 +803,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -868,7 +888,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -976,7 +996,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1041,25 +1061,7 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         readonly strings: Array<string>;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
-        /**
-         * @internal
-         * @private
-         */
-        addInt(value: number): void;
-        /**
-         * @internal
-         * @private
-         */
-        addFloat(value: number): void;
-        /**
-         * @internal
-         * @private
-         */
-        addString(value: string): void;
         /**
          * - Get the custom int number.
          * @version DragonBones 5.0
@@ -1095,7 +1097,6 @@ declare namespace dragonBones {
         getString(index?: number): string;
     }
     /**
-     * @internal
      * @private
      */
     class ActionData extends BaseObject {
@@ -1111,7 +1112,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1191,16 +1192,6 @@ declare namespace dragonBones {
          */
         stage: ArmatureData | null;
         /**
-         * @internal
-         * @private
-         */
-        readonly frameIndices: Array<number>;
-        /**
-         * @internal
-         * @private
-         */
-        readonly cachedFrames: Array<number>;
-        /**
          * - All armature data names.
          * @version DragonBones 3.0
          * @language en_US
@@ -1216,83 +1207,29 @@ declare namespace dragonBones {
          */
         readonly armatures: Map<ArmatureData>;
         /**
-         * @internal
-         * @private
-         */
-        binary: ArrayBuffer;
-        /**
-         * @internal
-         * @private
-         */
-        intArray: Int16Array;
-        /**
-         * @internal
-         * @private
-         */
-        floatArray: Float32Array;
-        /**
-         * @internal
-         * @private
-         */
-        frameIntArray: Int16Array;
-        /**
-         * @internal
-         * @private
-         */
-        frameFloatArray: Float32Array;
-        /**
-         * @internal
-         * @private
-         */
-        frameArray: Int16Array;
-        /**
-         * @internal
-         * @private
-         */
-        timelineArray: Uint16Array;
-        /**
          * @private
          */
         userData: UserData | null;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
         /**
-         * @internal
-         * @private
-         */
-        addArmature(value: ArmatureData): void;
-        /**
          * - Get a specific armature data.
-         * @param name - The armature data name.
+         * @param armatureName - The armature data name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的骨架数据。
-         * @param name - 骨架数据名称。
+         * @param armatureName - 骨架数据名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        getArmature(name: string): ArmatureData | null;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.BaseFactory#removeDragonBonesData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.BaseFactory#removeDragonBonesData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        dispose(): void;
+        getArmature(armatureName: string): ArmatureData | null;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1443,121 +1380,67 @@ declare namespace dragonBones {
          * @private
          */
         parent: DragonBonesData;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
         /**
-         * @internal
-         * @private
-         */
-        sortBones(): void;
-        /**
-         * @internal
-         * @private
-         */
-        cacheFrames(frameRate: number): void;
-        /**
-         * @internal
-         * @private
-         */
-        setCacheFrame(globalTransformMatrix: Matrix, transform: Transform): number;
-        /**
-         * @internal
-         * @private
-         */
-        getCacheFrame(globalTransformMatrix: Matrix, transform: Transform, arrayOffset: number): void;
-        /**
-         * @internal
-         * @private
-         */
-        addBone(value: BoneData): void;
-        /**
-         * @internal
-         * @private
-         */
-        addSlot(value: SlotData): void;
-        /**
-         * @internal
-         * @private
-         */
-        addConstraint(value: ConstraintData): void;
-        /**
-         * @internal
-         * @private
-         */
-        addSkin(value: SkinData): void;
-        /**
-         * @internal
-         * @private
-         */
-        addAnimation(value: AnimationData): void;
-        /**
-         * @internal
-         * @private
-         */
-        addAction(value: ActionData, isDefault: boolean): void;
-        /**
          * - Get a specific done data.
-         * @param name - The bone name.
+         * @param boneName - The bone name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的骨骼数据。
-         * @param name - 骨骼名称。
+         * @param boneName - 骨骼名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        getBone(name: string): BoneData | null;
+        getBone(boneName: string): BoneData | null;
         /**
          * - Get a specific slot data.
-         * @param name - The slot name.
+         * @param slotName - The slot name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的插槽数据。
-         * @param name - 插槽名称。
+         * @param slotName - 插槽名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        getSlot(name: string): SlotData | null;
+        getSlot(slotName: string): SlotData | null;
         /**
          * @private
          */
-        getConstraint(name: string): ConstraintData | null;
+        getConstraint(constraintName: string): ConstraintData | null;
         /**
          * - Get a specific skin data.
-         * @param name - The skin name.
+         * @param skinName - The skin name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定皮肤数据。
-         * @param name - 皮肤名称。
+         * @param skinName - 皮肤名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        getSkin(name: string): SkinData | null;
+        getSkin(skinName: string): SkinData | null;
         /**
-         * @internal
          * @private
          */
         getMesh(skinName: string, slotName: string, meshName: string): MeshDisplayData | null;
         /**
          * - Get a specific animation data.
-         * @param name - The animation name.
+         * @param animationName - The animation animationName.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 获取特定的动画数据。
-         * @param name - 动画名称。
+         * @param animationName - 动画名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        getAnimation(name: string): AnimationData | null;
+        getAnimation(animationName: string): AnimationData | null;
     }
     /**
      * - The bone data.
@@ -1603,6 +1486,10 @@ declare namespace dragonBones {
          */
         length: number;
         /**
+         * @private
+         */
+        alpha: number;
+        /**
          * - The bone name.
          * @version DragonBones 3.0
          * @language en_US
@@ -1632,23 +1519,6 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         parent: BoneData | null;
-        /**
-         * @inheritDoc
-         */
-        protected _onClear(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class SurfaceData extends BoneData {
-        static toString(): string;
-        segmentX: number;
-        segmentY: number;
-        readonly vertices: Array<number>;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
     }
     /**
@@ -1662,16 +1532,6 @@ declare namespace dragonBones {
      * @language zh_CN
      */
     class SlotData extends BaseObject {
-        /**
-         * @internal
-         * @private
-         */
-        static readonly DEFAULT_COLOR: ColorTransform;
-        /**
-         * @internal
-         * @private
-         */
-        static createColor(): ColorTransform;
         static toString(): string;
         /**
          * @private
@@ -1685,6 +1545,14 @@ declare namespace dragonBones {
          * @private
          */
         zOrder: number;
+        /**
+         * @private
+         */
+        zIndex: number;
+        /**
+         * @private
+         */
+        alpha: number;
         /**
          * - The slot name.
          * @version DragonBones 3.0
@@ -1715,16 +1583,13 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         parent: BoneData;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1745,7 +1610,6 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
     class CanvasData extends BaseObject {
@@ -1762,7 +1626,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1813,15 +1677,7 @@ declare namespace dragonBones {
          * @private
          */
         parent: ArmatureData;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
-        /**
-         * @internal
-         * @private
-         */
-        addDisplay(slotName: string, value: DisplayData | null): void;
         /**
          * @private
          */
@@ -1835,7 +1691,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1856,33 +1712,22 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
     abstract class ConstraintData extends BaseObject {
         order: number;
         name: string;
+        type: ConstraintType;
         target: BoneData;
         root: BoneData;
         bone: BoneData | null;
-        protected _onClear(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class IKConstraintData extends ConstraintData {
-        static toString(): string;
-        scaleEnabled: boolean;
-        bendPositive: boolean;
-        weight: number;
         protected _onClear(): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -1903,19 +1748,31 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
+     * @private
+     */
+    class GeometryData {
+        isShared: boolean;
+        inheritDeform: boolean;
+        offset: number;
+        data: DragonBonesData;
+        weight: WeightData | null;
+        clear(): void;
+        shareFrom(value: GeometryData): void;
+        readonly vertexCount: number;
+        readonly triangleCount: number;
+    }
+    /**
      * @private
      */
     abstract class DisplayData extends BaseObject {
         type: DisplayType;
         name: string;
         path: string;
-        parent: SkinData;
         readonly transform: Transform;
+        parent: SkinData;
         protected _onClear(): void;
     }
     /**
-     * @internal
      * @private
      */
     class ImageDisplayData extends DisplayData {
@@ -1925,7 +1782,6 @@ declare namespace dragonBones {
         protected _onClear(): void;
     }
     /**
-     * @internal
      * @private
      */
     class ArmatureDisplayData extends DisplayData {
@@ -1940,20 +1796,15 @@ declare namespace dragonBones {
         addAction(value: ActionData): void;
     }
     /**
-     * @internal
      * @private
      */
     class MeshDisplayData extends DisplayData {
         static toString(): string;
-        inheritDeform: boolean;
-        offset: number;
-        weight: WeightData | null;
-        glue: GlueData | null;
+        readonly geometry: GeometryData;
         texture: TextureData | null;
         protected _onClear(): void;
     }
     /**
-     * @internal
      * @private
      */
     class BoundingBoxDisplayData extends DisplayData {
@@ -1962,7 +1813,17 @@ declare namespace dragonBones {
         protected _onClear(): void;
     }
     /**
-     * @internal
+     * @private
+     */
+    class PathDisplayData extends DisplayData {
+        static toString(): string;
+        closed: boolean;
+        constantSpeed: boolean;
+        readonly geometry: GeometryData;
+        readonly curveLengths: Array<number>;
+        protected _onClear(): void;
+    }
+    /**
      * @private
      */
     class WeightData extends BaseObject {
@@ -1973,22 +1834,11 @@ declare namespace dragonBones {
         protected _onClear(): void;
         addBone(value: BoneData): void;
     }
-    /**
-     * @internal
-     * @private
-     */
-    class GlueData extends BaseObject {
-        static toString(): string;
-        readonly weights: Array<number>;
-        readonly meshes: Array<MeshDisplayData | null>;
-        protected _onClear(): void;
-        addMesh(value: MeshDisplayData | null): void;
-    }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -2048,9 +1898,6 @@ declare namespace dragonBones {
          * @private
          */
         height: number;
-        /**
-         * @private
-         */
         protected _onClear(): void;
         /**
          * - Check whether the bounding box contains a specific point. (Local coordinate system)
@@ -2113,10 +1960,6 @@ declare namespace dragonBones {
             x: number;
             y: number;
         } | null): number;
-        /**
-         * @inheritDoc
-         * @private
-         */
         protected _onClear(): void;
         /**
          * @inheritDoc
@@ -2161,10 +2004,6 @@ declare namespace dragonBones {
             x: number;
             y: number;
         } | null): number;
-        /**
-         * @inheritDoc
-         * @private
-         */
         protected _onClear(): void;
         /**
          * @inheritDoc
@@ -2228,14 +2067,6 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         readonly vertices: Array<number>;
-        /**
-         * @private
-         */
-        weight: WeightData | null;
-        /**
-         * @inheritDoc
-         * @private
-         */
         protected _onClear(): void;
         /**
          * @inheritDoc
@@ -2259,7 +2090,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -2292,23 +2123,9 @@ declare namespace dragonBones {
     class AnimationData extends BaseObject {
         static toString(): string;
         /**
-         * - FrameIntArray.
-         * @internal
          * @private
          */
-        frameIntOffset: number;
-        /**
-         * - FrameFloatArray.
-         * @internal
-         * @private
-         */
-        frameFloatOffset: number;
-        /**
-         * - FrameArray.
-         * @internal
-         * @private
-         */
-        frameOffset: number;
+        blendType: AnimationBlendType;
         /**
          * - The frame count of the animation.
          * @version DragonBones 3.0
@@ -2383,10 +2200,6 @@ declare namespace dragonBones {
         /**
          * @private
          */
-        readonly surfaceTimelines: Map<Array<TimelineData>>;
-        /**
-         * @private
-         */
         readonly slotTimelines: Map<Array<TimelineData>>;
         /**
          * @private
@@ -2416,66 +2229,49 @@ declare namespace dragonBones {
          * @private
          */
         parent: ArmatureData;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
         /**
-         * @internal
          * @private
          */
-        cacheFrames(frameRate: number): void;
+        addBoneTimeline(timelineName: string, timeline: TimelineData): void;
         /**
          * @private
          */
-        addBoneTimeline(bone: BoneData, timeline: TimelineData): void;
+        addSlotTimeline(timelineName: string, timeline: TimelineData): void;
         /**
          * @private
          */
-        addSurfaceTimeline(surface: SurfaceData, timeline: TimelineData): void;
+        addConstraintTimeline(timelineName: string, timeline: TimelineData): void;
         /**
          * @private
          */
-        addSlotTimeline(slot: SlotData, timeline: TimelineData): void;
+        addAnimationTimeline(timelineName: string, timeline: TimelineData): void;
         /**
          * @private
          */
-        addConstraintTimeline(constraint: ConstraintData, timeline: TimelineData): void;
+        getBoneTimelines(timelineName: string): Array<TimelineData> | null;
         /**
          * @private
          */
-        addAnimationTimeline(name: string, timeline: TimelineData): void;
+        getSlotTimelines(timelineName: string): Array<TimelineData> | null;
         /**
          * @private
          */
-        getBoneTimelines(name: string): Array<TimelineData> | null;
+        getConstraintTimelines(timelineName: string): Array<TimelineData> | null;
         /**
          * @private
          */
-        getSurfaceTimelines(name: string): Array<TimelineData> | null;
+        getAnimationTimelines(timelineName: string): Array<TimelineData> | null;
         /**
          * @private
          */
-        getSlotTimelines(name: string): Array<TimelineData> | null;
+        getBoneCachedFrameIndices(boneName: string): Array<number> | null;
         /**
          * @private
          */
-        getConstraintTimelines(name: string): Array<TimelineData> | null;
-        /**
-         * @private
-         */
-        getAnimationTimelines(name: string): Array<TimelineData> | null;
-        /**
-         * @private
-         */
-        getBoneCachedFrameIndices(name: string): Array<number> | null;
-        /**
-         * @private
-         */
-        getSlotCachedFrameIndices(name: string): Array<number> | null;
+        getSlotCachedFrameIndices(slotName: string): Array<number> | null;
     }
     /**
-     * @internal
      * @private
      */
     class TimelineData extends BaseObject {
@@ -2489,7 +2285,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -2565,7 +2361,7 @@ declare namespace dragonBones {
         /**
          * @private
          */
-        additiveBlending: boolean;
+        additive: boolean;
         /**
          * - Whether the animation state has control over the display property of the slots.
          * Sometimes blend a animation state does not want it to control the display properties of the slots,
@@ -2759,9 +2555,6 @@ declare namespace dragonBones {
          * @private
          */
         readonly boneMask: Array<string>;
-        /**
-         * @private
-         */
         protected _onClear(): void;
         /**
          * @private
@@ -2771,24 +2564,12 @@ declare namespace dragonBones {
          * @private
          */
         copyFrom(value: AnimationConfig): void;
-        /**
-         * @private
-         */
-        containsBoneMask(name: string): boolean;
-        /**
-         * @private
-         */
-        addBoneMask(armature: Armature, name: string, recursive?: boolean): void;
-        /**
-         * @private
-         */
-        removeBoneMask(armature: Armature, name: string, recursive?: boolean): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -2861,31 +2642,17 @@ declare namespace dragonBones {
          * @private
          */
         readonly textures: Map<TextureData>;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
         /**
          * @private
          */
         copyFrom(value: TextureAtlasData): void;
         /**
-         * @internal
          * @private
          */
-        abstract createTexture(): TextureData;
-        /**
-         * @internal
-         * @private
-         */
-        addTexture(value: TextureData): void;
-        /**
-         * @private
-         */
-        getTexture(name: string): TextureData | null;
+        getTexture(textureName: string): TextureData | null;
     }
     /**
-     * @internal
      * @private
      */
     abstract class TextureData extends BaseObject {
@@ -2902,7 +2669,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -2935,21 +2702,6 @@ declare namespace dragonBones {
      * @language zh_CN
      */
     interface IArmatureProxy extends IEventDispatcher {
-        /**
-         * @internal
-         * @private
-         */
-        dbInit(armature: Armature): void;
-        /**
-         * @internal
-         * @private
-         */
-        dbClear(): void;
-        /**
-         * @internal
-         * @private
-         */
-        dbUpdate(): void;
         /**
          * - Dispose the instance and the Armature instance. (The Armature instance will return to the object pool)
          * @example
@@ -2998,7 +2750,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -3058,91 +2810,20 @@ declare namespace dragonBones {
          * @private
          */
         userData: any;
-        private _lockUpdate;
-        private _bonesDirty;
         private _slotsDirty;
         private _zOrderDirty;
         private _flipX;
         private _flipY;
-        /**
-         * @internal
-         * @private
-         */
-        _cacheFrameIndex: number;
+        private _alpha;
         private readonly _bones;
         private readonly _slots;
-        /**
-         * @internal
-         * @private
-         */
-        readonly _glueSlots: Array<Slot>;
-        /**
-         * @internal
-         * @private
-         */
-        readonly _constraints: Array<Constraint>;
         private readonly _actions;
-        /**
-         * @internal
-         * @private
-         */
-        _armatureData: ArmatureData;
         private _animation;
         private _proxy;
         private _display;
-        /**
-         * @internal
-         * @private
-         */
-        _replaceTextureAtlasData: TextureAtlasData | null;
         private _replacedTexture;
-        /**
-         * @internal
-         * @private
-         */
-        _dragonBones: DragonBones;
         private _clock;
-        /**
-         * @internal
-         * @private
-         */
-        _parent: Slot | null;
-        /**
-         * @private
-         */
         protected _onClear(): void;
-        private _sortBones();
-        private _sortSlots();
-        /**
-         * @internal
-         * @private
-         */
-        _sortZOrder(slotIndices: Array<number> | Int16Array | null, offset: number): void;
-        /**
-         * @internal
-         * @private
-         */
-        _addBoneToBoneList(value: Bone): void;
-        /**
-         * @internal
-         * @private
-         */
-        _removeBoneFromBoneList(value: Bone): void;
-        /**
-         * @internal
-         * @private
-         */
-        _addSlotToSlotList(value: Slot): void;
-        /**
-         * @internal
-         * @private
-         */
-        _removeSlotFromSlotList(value: Slot): void;
-        /**
-         * @internal
-         * @private
-         */
-        _bufferAction(action: ActionData, append: boolean): void;
         /**
          * - Dispose the armature. (Return to the object pool)
          * @example
@@ -3164,11 +2845,6 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         dispose(): void;
-        /**
-         * @internal
-         * @private
-         */
-        init(armatureData: ArmatureData, proxy: IArmatureProxy, display: any, dragonBones: DragonBones): void;
         /**
          * @inheritDoc
          */
@@ -3311,26 +2987,6 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         getSlotByDisplay(display: any): Slot | null;
-        /**
-         * @deprecated
-         */
-        addBone(value: Bone, parentName: string): void;
-        /**
-         * @deprecated
-         */
-        addSlot(value: Slot, parentName: string): void;
-        /**
-         * @private
-         */
-        addConstraint(value: Constraint): void;
-        /**
-         * @deprecated
-         */
-        removeBone(value: Bone): void;
-        /**
-         * @deprecated
-         */
-        removeSlot(value: Slot): void;
         /**
          * - Get all bones.
          * @see dragonBones.Bone
@@ -3497,55 +3153,6 @@ declare namespace dragonBones {
          */
         readonly parent: Slot | null;
         /**
-         * @deprecated
-         * @private
-         */
-        replaceTexture(texture: any): void;
-        /**
-         * - Deprecated, please refer to {@link #eventDispatcher}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventDispatcher}。
-         * @deprecated
-         * @language zh_CN
-         */
-        hasEventListener(type: EventStringType): boolean;
-        /**
-         * - Deprecated, please refer to {@link #eventDispatcher}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventDispatcher}。
-         * @deprecated
-         * @language zh_CN
-         */
-        addEventListener(type: EventStringType, listener: Function, target: any): void;
-        /**
-         * - Deprecated, please refer to {@link #eventDispatcher}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventDispatcher}。
-         * @deprecated
-         * @language zh_CN
-         */
-        removeEventListener(type: EventStringType, listener: Function, target: any): void;
-        /**
-         * - Deprecated, please refer to {@link #cacheFrameRate}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #cacheFrameRate}。
-         * @deprecated
-         * @language zh_CN
-         */
-        enableAnimationCache(frameRate: number): void;
-        /**
          * - Deprecated, please refer to {@link #display}.
          * @deprecated
          * @language en_US
@@ -3561,7 +3168,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -3594,17 +3201,8 @@ declare namespace dragonBones {
      * @language zh_CN
      */
     abstract class TransformObject extends BaseObject {
-        /**
-         * @private
-         */
         protected static readonly _helpMatrix: Matrix;
-        /**
-         * @private
-         */
         protected static readonly _helpTransform: Transform;
-        /**
-         * @private
-         */
         protected static readonly _helpPoint: Point;
         /**
          * - A matrix relative to the armature coordinate system.
@@ -3651,34 +3249,10 @@ declare namespace dragonBones {
          * @private
          */
         userData: any;
-        /**
-         * @private
-         */
         protected _globalDirty: boolean;
         /**
-         * @internal
-         * @private
-         */
-        _armature: Armature;
-        /**
-         * @internal
-         * @private
-         */
-        _parent: Bone;
-        /**
-         * @private
          */
         protected _onClear(): void;
-        /**
-         * @internal
-         * @private
-         */
-        _setArmature(value: Armature | null): void;
-        /**
-         * @internal
-         * @private
-         */
-        _setParent(value: Bone | null): void;
         /**
          * - For performance considerations, rotation or scale in the {@link #global} attribute of the bone or slot is not always properly accessible,
          * some engines do not rely on these attributes to update rendering, such as Egret.
@@ -3714,23 +3288,12 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         readonly armature: Armature;
-        /**
-         * - The parent bone to which it belongs.
-         * @version DragonBones 3.0
-         * @language en_US
-         */
-        /**
-         * - 所属的父骨骼。
-         * @version DragonBones 3.0
-         * @language zh_CN
-         */
-        readonly parent: Bone;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -3784,71 +3347,15 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         offsetMode: OffsetMode;
-        /**
-         * @internal
-         * @private
-         */
-        readonly animationPose: Transform;
-        /**
-         * @internal
-         * @private
-         */
-        _transformDirty: boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _childrenTransformDirty: boolean;
         protected _localDirty: boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _hasConstraint: boolean;
-        private _visible;
+        protected _visible: boolean;
         protected _cachedFrameIndex: number;
         /**
-         * @internal
          * @private
          */
-        readonly _blendState: BlendState;
-        /**
-         * @internal
-         * @private
-         */
-        _boneData: BoneData;
-        /**
-         * @internal
-         * @private
-         */
-        _cachedFrameIndices: Array<number> | null;
-        /**
-         * @inheritDoc
-         */
+        protected _parent: Bone | null;
         protected _onClear(): void;
-        /**
-         * @private
-         */
         protected _updateGlobalTransformMatrix(isCache: boolean): void;
-        /**
-         * @inheritDoc
-         */
-        _setArmature(value: Armature | null): void;
-        /**
-         * @internal
-         * @private
-         */
-        init(boneData: BoneData): void;
-        /**
-         * @internal
-         * @private
-         */
-        update(cacheFrameIndex: number): void;
-        /**
-         * @internal
-         * @private
-         */
-        updateByConstraint(): void;
         /**
          * - Forces the bone to update the transform in the next frame.
          * When the bone is not animated or its animation state is finished, the bone will not continue to update,
@@ -3876,20 +3383,18 @@ declare namespace dragonBones {
          */
         invalidUpdate(): void;
         /**
-         * - Check whether the bone contains a specific bone or slot.
+         * - Check whether the bone contains a specific bone.
          * @see dragonBones.Bone
-         * @see dragonBones.Slot
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
-         * - 检查该骨骼是否包含特定的骨骼或插槽。
+         * - 检查该骨骼是否包含特定的骨骼。
          * @see dragonBones.Bone
-         * @see dragonBones.Slot
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        contains(value: TransformObject): boolean;
+        contains(value: Bone): boolean;
         /**
          * - The bone data.
          * @version DragonBones 4.5
@@ -3928,44 +3433,46 @@ declare namespace dragonBones {
          */
         readonly name: string;
         /**
-         * - Deprecated, please refer to {@link dragonBones.Armature#getBones()}.
-         * @deprecated
+         * - The parent bone to which it belongs.
+         * @version DragonBones 3.0
          * @language en_US
          */
         /**
-         * - 已废弃，请参考 {@link dragonBones.Armature#getBones()}。
-         * @deprecated
+         * - 所属的父骨骼。
+         * @version DragonBones 3.0
          * @language zh_CN
          */
-        getBones(): Array<Bone>;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.Armature#getSlots()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.Armature#getSlots()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        getSlots(): Array<Slot>;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.Armature#getSlot()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.Armature#getSlot()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly slot: Slot | null;
+        readonly parent: Bone | null;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+declare namespace dragonBones {
+}
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -3986,78 +3493,21 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
-    class Surface extends Bone {
+    class DisplayFrame extends BaseObject {
         static toString(): string;
-        private _dX;
-        private _dY;
-        private _k;
-        private _kX;
-        private _kY;
-        /**
-         * For debug draw.
-         * @internal
-         * @private
-         */
-        readonly _vertices: Array<number>;
-        /**
-         * For timeline state.
-         * @internal
-         * @private
-         */
-        readonly _deformVertices: Array<number>;
-        /**
-         * x1, y1, x2, y2, x3, y3, x4, y4, d1X, d1Y, d2X, d2Y
-         */
-        private readonly _hullCache;
-        /**
-         * Inside [flag, a, b, c, d, tx, ty], Outside [flag, a, b, c, d, tx, ty]
-         */
-        private readonly _matrixCahce;
-        /**
-         * @inheritDoc
-         */
+        rawDisplayData: DisplayData | null;
+        displayData: DisplayData | null;
+        textureData: TextureData | null;
+        display: any | Armature | null;
+        readonly deformVertices: Array<number>;
         protected _onClear(): void;
-        private _getAffineTransform(x, y, lX, lY, aX, aY, bX, bY, cX, cY, transform, matrix, isDown);
-        private _updateVertices();
-        /**
-         * @private
-         */
-        protected _updateGlobalTransformMatrix(isCache: boolean): void;
-        _getGlobalTransformMatrix(x: number, y: number): Matrix;
-        init(surfaceData: SurfaceData): void;
-        /**
-         * @internal
-         * @private
-         */
-        update(cacheFrameIndex: number): void;
+        updateDeformVertices(): void;
+        getGeometryData(): GeometryData | null;
+        getBoundingBox(): BoundingBoxData | null;
+        getTextureData(): TextureData | null;
     }
-}
-/**
- * The MIT License (MIT)
- *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-declare namespace dragonBones {
     /**
      * - The slot attached to the armature, controls the display status and properties of the display object.
      * A bone can contain multiple slots.
@@ -4102,267 +3552,59 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         displayController: string | null;
-        /**
-         * @private
-         */
+        protected _displayDataDirty: boolean;
         protected _displayDirty: boolean;
-        /**
-         * @private
-         */
-        protected _zOrderDirty: boolean;
-        /**
-         * @private
-         */
+        protected _geometryDirty: boolean;
+        protected _textureDirty: boolean;
         protected _visibleDirty: boolean;
-        /**
-         * @private
-         */
         protected _blendModeDirty: boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _colorDirty: boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _meshDirty: boolean;
-        /**
-         * @private
-         */
+        protected _zOrderDirty: boolean;
         protected _transformDirty: boolean;
-        /**
-         * @private
-         */
         protected _visible: boolean;
-        /**
-         * @private
-         */
         protected _blendMode: BlendMode;
-        /**
-         * @private
-         */
         protected _displayIndex: number;
-        /**
-         * @private
-         */
         protected _animationDisplayIndex: number;
-        /**
-         * @internal
-         * @private
-         */
-        _zOrder: number;
-        /**
-         * @private
-         */
         protected _cachedFrameIndex: number;
-        /**
-         * @internal
-         * @private
-         */
-        _pivotX: number;
-        /**
-         * @internal
-         * @private
-         */
-        _pivotY: number;
-        /**
-         * @private
-         */
         protected readonly _localMatrix: Matrix;
-        /**
-         * @internal
-         * @private
-         */
-        readonly _colorTransform: ColorTransform;
-        /**
-         * @internal
-         * @private
-         */
-        readonly _deformVertices: Array<number>;
-        /**
-         * @private
-         */
-        readonly _displayDatas: Array<DisplayData | null>;
-        /**
-         * @private
-         */
-        protected readonly _displayList: Array<any | Armature>;
-        /**
-         * @private
-         */
-        protected readonly _meshBones: Array<Bone | null>;
-        /**
-         * @private
-         */
-        protected readonly _meshSlots: Array<Slot | null>;
-        /**
-         * @internal
-         * @private
-         */
-        _slotData: SlotData;
-        /**
-         * @private
-         */
-        protected _rawDisplayDatas: Array<DisplayData | null> | null;
-        /**
-         * @private
-         */
-        protected _displayData: DisplayData | null;
-        /**
-         * @private
-         */
-        protected _textureData: TextureData | null;
-        /**
-         * @internal
-         * @private
-         */
-        _meshData: MeshDisplayData | null;
-        /**
-         * @private
-         */
         protected _boundingBoxData: BoundingBoxData | null;
-        /**
-         * @private
-         */
+        protected _textureData: TextureData | null;
         protected _rawDisplay: any;
-        /**
-         * @private
-         */
         protected _meshDisplay: any;
-        /**
-         * @private
-         */
-        protected _display: any;
-        /**
-         * @private
-         */
+        protected _display: any | null;
         protected _childArmature: Armature | null;
         /**
-         * @internal
          * @private
          */
-        _cachedFrameIndices: Array<number> | null;
-        /**
-         * @inheritDoc
-         */
+        protected _parent: Bone;
         protected _onClear(): void;
-        /**
-         * @private
-         */
         protected abstract _initDisplay(value: any, isRetain: boolean): void;
-        /**
-         * @private
-         */
         protected abstract _disposeDisplay(value: any, isRelease: boolean): void;
-        /**
-         * @private
-         */
         protected abstract _onUpdateDisplay(): void;
-        /**
-         * @private
-         */
         protected abstract _addDisplay(): void;
-        /**
-         * @private
-         */
         protected abstract _replaceDisplay(value: any): void;
-        /**
-         * @private
-         */
         protected abstract _removeDisplay(): void;
-        /**
-         * @private
-         */
         protected abstract _updateZOrder(): void;
-        /**
-         * @private
-         */
-        abstract _updateVisible(): void;
-        /**
-         * @private
-         */
         protected abstract _updateBlendMode(): void;
-        /**
-         * @private
-         */
         protected abstract _updateColor(): void;
-        /**
-         * @private
-         */
         protected abstract _updateFrame(): void;
-        /**
-         * @private
-         */
         protected abstract _updateMesh(): void;
-        /**
-         * @internal
-         * @private
-         */
-        abstract _updateGlueMesh(): void;
-        /**
-         * @private
-         */
         protected abstract _updateTransform(): void;
-        /**
-         * @private
-         */
         protected abstract _identityTransform(): void;
-        /**
-         * @private
-         */
-        protected _getDefaultRawDisplayData(): DisplayData | null;
-        /**
-         * @private
-         */
+        protected _hasDisplay(display: any): boolean;
         protected _updateDisplayData(): void;
-        /**
-         * @private
-         */
         protected _updateDisplay(): void;
-        /**
-         * @private
-         */
         protected _updateGlobalTransformMatrix(isCache: boolean): void;
         /**
-         * @private
+         * - Forces the slot to update the state of the display object in the next frame.
+         * @version DragonBones 4.5
+         * @language en_US
          */
-        protected _isMeshBonesUpdate(): boolean;
         /**
-         * @inheritDoc
+         * - 强制插槽在下一帧更新显示对象的状态。
+         * @version DragonBones 4.5
+         * @language zh_CN
          */
-        _setArmature(value: Armature | null): void;
-        /**
-         * @internal
-         * @private
-         */
-        _setDisplayIndex(value: number, isAnimation?: boolean): boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _setZorder(value: number): boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _setColor(value: ColorTransform): boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _setDisplayList(value: Array<any> | null): boolean;
-        /**
-         * @internal
-         * @private
-         */
-        init(slotData: SlotData, displayDatas: Array<DisplayData | null> | null, rawDisplay: any, meshDisplay: any): void;
-        /**
-         * @internal
-         * @private
-         */
-        update(cacheFrameIndex: number): void;
+        invalidUpdate(): void;
         /**
          * @private
          */
@@ -4370,7 +3612,19 @@ declare namespace dragonBones {
         /**
          * @private
          */
-        replaceDisplayData(value: DisplayData | null, displayIndex?: number): void;
+        replaceRawDisplayData(displayData: DisplayData | null, index?: number): void;
+        /**
+         * @private
+         */
+        replaceDisplayData(displayData: DisplayData | null, index?: number): void;
+        /**
+         * @private
+         */
+        replaceTextureData(textureData: TextureData | null, index?: number): void;
+        /**
+         * @private
+         */
+        replaceDisplay(value: any | Armature | null, index?: number): void;
         /**
          * - Check whether a specific point is inside a custom bounding box in the slot.
          * The coordinate system of the point is the inner coordinate system of the armature.
@@ -4431,16 +3685,9 @@ declare namespace dragonBones {
             y: number;
         } | null): number;
         /**
-         * - Forces the slot to update the state of the display object in the next frame.
-         * @version DragonBones 4.5
-         * @language en_US
+         * @private
          */
-        /**
-         * - 强制插槽在下一帧更新显示对象的状态。
-         * @version DragonBones 4.5
-         * @language zh_CN
-         */
-        invalidUpdate(): void;
+        getDisplayFrameAt(index: number): DisplayFrame;
         /**
          * - The visible of slot's display object.
          * @default true
@@ -4454,6 +3701,10 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         visible: boolean;
+        /**
+         * @private
+         */
+        displayFrameCount: number;
         /**
          * - The index of the display object displayed in the display list.
          * @example
@@ -4515,10 +3766,6 @@ declare namespace dragonBones {
          */
         readonly slotData: SlotData;
         /**
-         * @private
-         */
-        rawDisplayDatas: Array<DisplayData | null> | null;
-        /**
          * - The custom bounding box data for the slot at current time.
          * @version DragonBones 5.0
          * @language en_US
@@ -4563,6 +3810,10 @@ declare namespace dragonBones {
          * @example
          * <pre>
          *     let slot = armature.getSlot("weapon");
+         *     let prevChildArmature = slot.childArmature;
+         *     if (prevChildArmature) {
+         *         prevChildArmature.dispose();
+         *     }
          *     slot.childArmature = factory.buildArmature("weapon_blabla", "weapon_blabla_project");
          * </pre>
          * @version DragonBones 3.0
@@ -4570,15 +3821,31 @@ declare namespace dragonBones {
          */
         /**
          * - 插槽此时显示的子骨架。
+         * 注意，被替换的对象或子骨架并不会被回收，根据语言和引擎的不同，需要额外处理。
          * @example
          * <pre>
          *     let slot = armature.getSlot("weapon");
+         *     let prevChildArmature = slot.childArmature;
+         *     if (prevChildArmature) {
+         *         prevChildArmature.dispose();
+         *     }
          *     slot.childArmature = factory.buildArmature("weapon_blabla", "weapon_blabla_project");
          * </pre>
          * @version DragonBones 3.0
          * @language zh_CN
          */
         childArmature: Armature | null;
+        /**
+         * - The parent bone to which it belongs.
+         * @version DragonBones 3.0
+         * @language en_US
+         */
+        /**
+         * - 所属的父骨骼。
+         * @version DragonBones 3.0
+         * @language zh_CN
+         */
+        readonly parent: Bone;
         /**
          * - Deprecated, please refer to {@link #display}.
          * @deprecated
@@ -4606,7 +3873,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -4626,66 +3893,11 @@ declare namespace dragonBones {
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 declare namespace dragonBones {
-    /**
-     * @internal
-     * @private
-     */
-    abstract class Constraint extends BaseObject {
-        protected static readonly _helpMatrix: Matrix;
-        protected static readonly _helpTransform: Transform;
-        protected static readonly _helpPoint: Point;
-        /**
-         * - For timeline state.
-         * @internal
-         */
-        _constraintData: ConstraintData;
-        protected _armature: Armature;
-        /**
-         * - For sort bones.
-         * @internal
-         */
-        _target: Bone;
-        /**
-         * - For sort bones.
-         * @internal
-         */
-        _root: Bone;
-        protected _bone: Bone | null;
-        protected _onClear(): void;
-        abstract init(constraintData: ConstraintData, armature: Armature): void;
-        abstract update(): void;
-        abstract invalidUpdate(): void;
-        readonly name: string;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class IKConstraint extends Constraint {
-        static toString(): string;
-        private _scaleEnabled;
-        /**
-         * - For timeline state.
-         * @internal
-         */
-        _bendPositive: boolean;
-        /**
-         * - For timeline state.
-         * @internal
-         */
-        _weight: number;
-        protected _onClear(): void;
-        private _computeA();
-        private _computeB();
-        init(constraintData: ConstraintData, armature: Armature): void;
-        update(): void;
-        invalidUpdate(): void;
-    }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -4761,7 +3973,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -4822,6 +4034,7 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         timeScale: number;
+        private _systemTime;
         private readonly _animatebles;
         private _clock;
         /**
@@ -4904,23 +4117,12 @@ declare namespace dragonBones {
          * @inheritDoc
          */
         clock: WorldClock | null;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.BaseFactory#clock}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.BaseFactory#clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static readonly clock: WorldClock;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -4969,30 +4171,20 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         timeScale: number;
-        private _lockUpdate;
+        /**
+         * Update bones and slots cachedFrameIndices.
+         */
         private _animationDirty;
         private _inheritTimeScale;
         private readonly _animationNames;
         private readonly _animationStates;
         private readonly _animations;
+        private readonly _blendStates;
         private _armature;
         private _animationConfig;
         private _lastAnimationState;
-        /**
-         * @private
-         */
         protected _onClear(): void;
         private _fadeOut(animationConfig);
-        /**
-         * @internal
-         * @private
-         */
-        init(armature: Armature): void;
-        /**
-         * @internal
-         * @private
-         */
-        advanceTime(passedTime: number): void;
         /**
          * - Clear all animations states.
          * @see dragonBones.AnimationState
@@ -5213,6 +4405,7 @@ declare namespace dragonBones {
         /**
          * - Get a specific animation state.
          * @param animationName - The name of animation state.
+         * @param layer - The layer of find animation states. [-1: Find all layers, [0~N]: Specified layer] (default: -1)
          * @example
          * <pre>
          *     armature.animation.play("walk");
@@ -5223,8 +4416,9 @@ declare namespace dragonBones {
          * @language en_US
          */
         /**
-         * - 获取指定的动画状态
+         * - 获取指定的动画状态。
          * @param animationName - 动画状态名称。
+         * @param layer - 查找动画状态的层级。 [-1: 查找所有层级, [0~N]: 指定层级] （默认: -1）
          * @example
          * <pre>
          *     armature.animation.play("walk");
@@ -5234,7 +4428,7 @@ declare namespace dragonBones {
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        getState(animationName: string): AnimationState | null;
+        getState(animationName: string, layer?: number): AnimationState | null;
         /**
          * - Check whether a specific animation data is included.
          * @param animationName - The name of animation data.
@@ -5260,7 +4454,7 @@ declare namespace dragonBones {
          * @version DragonBones 5.1
          * @language zh_CN
          */
-        getStates(): Array<AnimationState>;
+        getStates(): ReadonlyArray<AnimationState>;
         /**
          * - Check whether there is an animation state is playing
          * @see dragonBones.AnimationState
@@ -5310,7 +4504,7 @@ declare namespace dragonBones {
          * @version DragonBones 4.5
          * @language zh_CN
          */
-        readonly animationNames: Array<string>;
+        readonly animationNames: ReadonlyArray<string>;
         /**
          * - All animation data.
          * @version DragonBones 4.5
@@ -5348,56 +4542,12 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         readonly lastAnimationState: AnimationState | null;
-        /**
-         * - Deprecated, please refer to {@link #play()} {@link #fadeIn()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #play()} {@link #fadeIn()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        gotoAndPlay(animationName: string, fadeInTime?: number, duration?: number, playTimes?: number, layer?: number, group?: string | null, fadeOutMode?: AnimationFadeOutMode, pauseFadeOut?: boolean, pauseFadeIn?: boolean): AnimationState | null;
-        /**
-         * - Deprecated, please refer to {@link #gotoAndStopByTime()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #gotoAndStopByTime()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        gotoAndStop(animationName: string, time?: number): AnimationState | null;
-        /**
-         * - Deprecated, please refer to {@link #animationNames}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #animationNames}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly animationList: Array<string>;
-        /**
-         * - Deprecated, please refer to {@link #animationNames}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #animationNames}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly animationDataList: Array<AnimationData>;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -5440,7 +4590,7 @@ declare namespace dragonBones {
         /**
          * @private
          */
-        additiveBlending: boolean;
+        additive: boolean;
         /**
          * - Whether the animation state has control over the display object properties of the slots.
          * Sometimes blend a animation state does not want it to control the display object properties of the slots,
@@ -5473,6 +4623,10 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         resetToPose: boolean;
+        /**
+         * @private
+         */
+        blendType: AnimationBlendType;
         /**
          * - The play times. [0: Loop play, [1~N]: Play N times]
          * @version DragonBones 3.0
@@ -5519,18 +4673,21 @@ declare namespace dragonBones {
          */
         timeScale: number;
         /**
-         * - The blend weight.
-         * @default 1.0
-         * @version DragonBones 5.0
-         * @language en_US
+         * @private
          */
+        parameterX: number;
         /**
-         * - 混合权重。
-         * @default 1.0
-         * @version DragonBones 5.0
-         * @language zh_CN
+         * @private
          */
-        weight: number;
+        parameterY: number;
+        /**
+         * @private
+         */
+        positionX: number;
+        /**
+         * @private
+         */
+        positionY: number;
         /**
          * - The auto fade out time when the animation state play completed.
          * [-1: Do not fade out automatically, [0~N]: The fade out time] (In seconds)
@@ -5579,93 +4736,26 @@ declare namespace dragonBones {
          */
         group: string;
         private _timelineDirty;
-        /**
-         * - xx: Play Enabled, Fade Play Enabled
-         * @internal
-         * @private
-         */
-        _playheadState: number;
-        /**
-         * -1: Fade in, 0: Fade complete, 1: Fade out;
-         * @internal
-         * @private
-         */
-        _fadeState: number;
-        /**
-         * -1: Fade start, 0: Fading, 1: Fade complete;
-         * @internal
-         * @private
-         */
-        _subFadeState: number;
-        /**
-         * @internal
-         * @private
-         */
-        _position: number;
-        /**
-         * @internal
-         * @private
-         */
-        _duration: number;
+        private _weight;
         private _fadeTime;
         private _time;
-        /**
-         * @internal
-         * @private
-         */
-        _fadeProgress: number;
-        /**
-         * @internal
-         * @private
-         */
-        _weightResult: number;
-        /**
-         * @internal
-         * @private
-         */
-        readonly _blendState: BlendState;
         private readonly _boneMask;
         private readonly _boneTimelines;
-        private readonly _surfaceTimelines;
+        private readonly _boneBlendTimelines;
         private readonly _slotTimelines;
+        private readonly _slotBlendTimelines;
         private readonly _constraintTimelines;
         private readonly _animationTimelines;
         private readonly _poseTimelines;
-        private readonly _bonePoses;
-        /**
-         * @internal
-         * @private
-         */
-        _animationData: AnimationData;
+        private _animationData;
         private _armature;
-        /**
-         * @internal
-         * @private
-         */
-        _actionTimeline: ActionTimelineState;
         private _zOrderTimeline;
-        /**
-         * @internal
-         * @private
-         */
-        _parent: AnimationState;
-        /**
-         * @private
-         */
+        private _activeChildA;
+        private _activeChildB;
         protected _onClear(): void;
         private _updateTimelines();
         private _updateBoneAndSlotTimelines();
         private _advanceFadeTime(passedTime);
-        /**
-         * @internal
-         * @private
-         */
-        init(armature: Armature, animationData: AnimationData, animationConfig: AnimationConfig): void;
-        /**
-         * @internal
-         * @private
-         */
-        advanceTime(passedTime: number, cacheFrameRate: number): void;
         /**
          * - Continue play.
          * @version DragonBones 3.0
@@ -5705,47 +4795,47 @@ declare namespace dragonBones {
         fadeOut(fadeOutTime: number, pausePlayhead?: boolean): void;
         /**
          * - Check if a specific bone mask is included.
-         * @param name - The bone name.
+         * @param boneName - The bone name.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 检查是否包含特定骨骼遮罩。
-         * @param name - 骨骼名称。
+         * @param boneName - 骨骼名称。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        containsBoneMask(name: string): boolean;
+        containsBoneMask(boneName: string): boolean;
         /**
          * - Add a specific bone mask.
-         * @param name - The bone name.
+         * @param boneName - The bone name.
          * @param recursive - Whether or not to add a mask to the bone's sub-bone.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 添加特定的骨骼遮罩。
-         * @param name - 骨骼名称。
+         * @param boneName - 骨骼名称。
          * @param recursive - 是否为该骨骼的子骨骼添加遮罩。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        addBoneMask(name: string, recursive?: boolean): void;
+        addBoneMask(boneName: string, recursive?: boolean): void;
         /**
          * - Remove the mask of a specific bone.
-         * @param name - The bone name.
+         * @param boneName - The bone name.
          * @param recursive - Whether to remove the bone's sub-bone mask.
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 删除特定骨骼的遮罩。
-         * @param name - 骨骼名称。
+         * @param boneName - 骨骼名称。
          * @param recursive - 是否删除该骨骼的子骨骼遮罩。
          * @version DragonBones 3.0
          * @language zh_CN
          */
-        removeBoneMask(name: string, recursive?: boolean): void;
+        removeBoneMask(boneName: string, recursive?: boolean): void;
         /**
          * - Remove all bone masks.
          * @version DragonBones 3.0
@@ -5757,6 +4847,10 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         removeAllBoneMask(): void;
+        /**
+         * @private
+         */
+        addState(animationState: AnimationState, timelineDatas?: TimelineData[] | null): void;
         /**
          * - Whether the animation state is fading in.
          * @version DragonBones 5.1
@@ -5846,11 +4940,24 @@ declare namespace dragonBones {
          */
         currentTime: number;
         /**
+         * - The blend weight.
+         * @default 1.0
+         * @version DragonBones 5.0
+         * @language en_US
+         */
+        /**
+         * - 混合权重。
+         * @default 1.0
+         * @version DragonBones 5.0
+         * @language zh_CN
+         */
+        /**
          * - The animation data.
          * @see dragonBones.AnimationData
          * @version DragonBones 3.0
          * @language en_US
          */
+        weight: number;
         /**
          * - 动画数据。
          * @see dragonBones.AnimationData
@@ -5859,35 +4966,11 @@ declare namespace dragonBones {
          */
         readonly animationData: AnimationData;
     }
-    /**
-     * @internal
-     * @private
-     */
-    class BonePose extends BaseObject {
-        static toString(): string;
-        readonly current: Transform;
-        readonly delta: Transform;
-        readonly result: Transform;
-        protected _onClear(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class BlendState {
-        dirty: boolean;
-        layer: number;
-        leftWeight: number;
-        layerWeight: number;
-        blendWeight: number;
-        update(weight: number, layer: number): number;
-        clear(): void;
-    }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -5907,101 +4990,11 @@ declare namespace dragonBones {
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 declare namespace dragonBones {
-    /**
-     * @internal
-     * @private
-     */
-    const enum TweenState {
-        None = 0,
-        Once = 1,
-        Always = 2,
-    }
-    /**
-     * @internal
-     * @private
-     */
-    abstract class TimelineState extends BaseObject {
-        playState: number;
-        currentPlayTimes: number;
-        currentTime: number;
-        protected _tweenState: TweenState;
-        protected _frameRate: number;
-        protected _frameValueOffset: number;
-        protected _frameCount: number;
-        protected _frameOffset: number;
-        protected _frameIndex: number;
-        protected _frameRateR: number;
-        protected _position: number;
-        protected _duration: number;
-        protected _timeScale: number;
-        protected _timeOffset: number;
-        protected _dragonBonesData: DragonBonesData;
-        protected _animationData: AnimationData;
-        protected _timelineData: TimelineData | null;
-        protected _armature: Armature;
-        protected _animationState: AnimationState;
-        protected _actionTimeline: TimelineState;
-        protected _frameArray: Array<number> | Int16Array;
-        protected _frameIntArray: Array<number> | Int16Array;
-        protected _frameFloatArray: Array<number> | Int16Array;
-        protected _timelineArray: Array<number> | Uint16Array;
-        protected _frameIndices: Array<number>;
-        protected _onClear(): void;
-        protected abstract _onArriveAtFrame(): void;
-        protected abstract _onUpdateFrame(): void;
-        protected _setCurrentTime(passedTime: number): boolean;
-        init(armature: Armature, animationState: AnimationState, timelineData: TimelineData | null): void;
-        fadeOut(): void;
-        update(passedTime: number): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    abstract class TweenTimelineState extends TimelineState {
-        private static _getEasingValue(tweenType, progress, easing);
-        private static _getEasingCurveValue(progress, samples, count, offset);
-        protected _tweenType: TweenType;
-        protected _curveCount: number;
-        protected _framePosition: number;
-        protected _frameDurationR: number;
-        protected _tweenProgress: number;
-        protected _tweenEasing: number;
-        protected _onClear(): void;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    abstract class BoneTimelineState extends TweenTimelineState {
-        bone: Bone;
-        bonePose: BonePose;
-        protected _onClear(): void;
-        blend(state: number): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    abstract class SlotTimelineState extends TweenTimelineState {
-        slot: Slot;
-        protected _onClear(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    abstract class ConstraintTimelineState extends TweenTimelineState {
-        constraint: Constraint;
-        protected _onClear(): void;
-    }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6021,161 +5014,11 @@ declare namespace dragonBones {
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 declare namespace dragonBones {
-    /**
-     * @internal
-     * @private
-     */
-    class ActionTimelineState extends TimelineState {
-        static toString(): string;
-        private _onCrossFrame(frameIndex);
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        update(passedTime: number): void;
-        setCurrentTime(value: number): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class ZOrderTimelineState extends TimelineState {
-        static toString(): string;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class BoneAllTimelineState extends BoneTimelineState {
-        static toString(): string;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        fadeOut(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class BoneTranslateTimelineState extends BoneTimelineState {
-        static toString(): string;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class BoneRotateTimelineState extends BoneTimelineState {
-        static toString(): string;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        fadeOut(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class BoneScaleTimelineState extends BoneTimelineState {
-        static toString(): string;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class SurfaceTimelineState extends TweenTimelineState {
-        static toString(): string;
-        surface: Surface;
-        private _frameFloatOffset;
-        private _valueCount;
-        private _deformCount;
-        private _valueOffset;
-        private readonly _current;
-        private readonly _delta;
-        private readonly _result;
-        protected _onClear(): void;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        init(armature: Armature, animationState: AnimationState, timelineData: TimelineData | null): void;
-        blend(state: number): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class SlotDislayTimelineState extends SlotTimelineState {
-        static toString(): string;
-        protected _onArriveAtFrame(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class SlotColorTimelineState extends SlotTimelineState {
-        static toString(): string;
-        private _dirty;
-        private readonly _current;
-        private readonly _delta;
-        private readonly _result;
-        protected _onClear(): void;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        fadeOut(): void;
-        update(passedTime: number): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class SlotFFDTimelineState extends SlotTimelineState {
-        static toString(): string;
-        meshOffset: number;
-        private _dirty;
-        private _frameFloatOffset;
-        private _valueCount;
-        private _deformCount;
-        private _valueOffset;
-        private readonly _current;
-        private readonly _delta;
-        private readonly _result;
-        protected _onClear(): void;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        init(armature: Armature, animationState: AnimationState, timelineData: TimelineData | null): void;
-        fadeOut(): void;
-        update(passedTime: number): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class IKConstraintTimelineState extends ConstraintTimelineState {
-        static toString(): string;
-        private _current;
-        private _delta;
-        protected _onClear(): void;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class AnimationTimelineState extends TweenTimelineState {
-        static toString(): string;
-        animationState: AnimationState;
-        private readonly _floats;
-        protected _onClear(): void;
-        protected _onArriveAtFrame(): void;
-        protected _onUpdateFrame(): void;
-        blend(state: number): void;
-    }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6393,6 +5236,13 @@ declare namespace dragonBones {
          */
         animationState: AnimationState;
         /**
+         * @private
+         */
+        actionData: ActionData | null;
+        /**
+         * @private
+         */
+        /**
          * - The custom data.
          * @see dragonBones.CustomData
          * @version DragonBones 5.0
@@ -6405,16 +5255,13 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         data: UserData | null;
-        /**
-         * @private
-         */
         protected _onClear(): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6515,45 +5362,12 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         removeDBEventListener(type: EventStringType, listener: Function, thisObject: any): void;
-        /**
-         * - Deprecated, please refer to {@link #hasDBEventListener()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #hasDBEventListener()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        hasEvent(type: EventStringType): boolean;
-        /**
-         * - Deprecated, please refer to {@link #addDBEventListener()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #addDBEventListener()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        addEvent(type: EventStringType, listener: Function, thisObject: any): void;
-        /**
-         * - Deprecated, please refer to {@link #removeDBEventListener()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #removeDBEventListener()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        removeEvent(type: EventStringType, listener: Function, thisObject: any): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6574,7 +5388,6 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
     abstract class DataParser {
@@ -6584,6 +5397,7 @@ declare namespace dragonBones {
         protected static readonly DATA_VERSION_4_5: string;
         protected static readonly DATA_VERSION_5_0: string;
         protected static readonly DATA_VERSION_5_5: string;
+        protected static readonly DATA_VERSION_5_6: string;
         protected static readonly DATA_VERSION: string;
         protected static readonly DATA_VERSIONS: Array<string>;
         protected static readonly TEXTURE_ATLAS: string;
@@ -6600,17 +5414,19 @@ declare namespace dragonBones {
         protected static readonly DRADON_BONES: string;
         protected static readonly USER_DATA: string;
         protected static readonly ARMATURE: string;
+        protected static readonly CANVAS: string;
         protected static readonly BONE: string;
         protected static readonly SURFACE: string;
         protected static readonly SLOT: string;
         protected static readonly CONSTRAINT: string;
-        protected static readonly IK: string;
         protected static readonly SKIN: string;
         protected static readonly DISPLAY: string;
-        protected static readonly ANIMATION: string;
-        protected static readonly Z_ORDER: string;
-        protected static readonly FFD: string;
         protected static readonly FRAME: string;
+        protected static readonly IK: string;
+        protected static readonly PATH_CONSTRAINT: string;
+        protected static readonly ANIMATION: string;
+        protected static readonly TIMELINE: string;
+        protected static readonly FFD: string;
         protected static readonly TRANSLATE_FRAME: string;
         protected static readonly ROTATE_FRAME: string;
         protected static readonly SCALE_FRAME: string;
@@ -6622,7 +5438,6 @@ declare namespace dragonBones {
         protected static readonly INTS: string;
         protected static readonly FLOATS: string;
         protected static readonly STRINGS: string;
-        protected static readonly CANVAS: string;
         protected static readonly TRANSFORM: string;
         protected static readonly PIVOT: string;
         protected static readonly AABB: string;
@@ -6640,6 +5455,8 @@ declare namespace dragonBones {
         protected static readonly PATH: string;
         protected static readonly LENGTH: string;
         protected static readonly DISPLAY_INDEX: string;
+        protected static readonly Z_ORDER: string;
+        protected static readonly Z_INDEX: string;
         protected static readonly BLEND_MODE: string;
         protected static readonly INHERIT_TRANSLATION: string;
         protected static readonly INHERIT_ROTATION: string;
@@ -6652,6 +5469,7 @@ declare namespace dragonBones {
         protected static readonly BEND_POSITIVE: string;
         protected static readonly CHAIN: string;
         protected static readonly WEIGHT: string;
+        protected static readonly BLEND_TYPE: string;
         protected static readonly FADE_IN_TIME: string;
         protected static readonly PLAY_TIMES: string;
         protected static readonly SCALE: string;
@@ -6675,6 +5493,7 @@ declare namespace dragonBones {
         protected static readonly VALUE: string;
         protected static readonly ROTATE: string;
         protected static readonly SKEW: string;
+        protected static readonly ALPHA: string;
         protected static readonly ALPHA_OFFSET: string;
         protected static readonly RED_OFFSET: string;
         protected static readonly GREEN_OFFSET: string;
@@ -6689,46 +5508,39 @@ declare namespace dragonBones {
         protected static readonly WEIGHTS: string;
         protected static readonly SLOT_POSE: string;
         protected static readonly BONE_POSE: string;
-        protected static readonly GLUE_WEIGHTS: string;
-        protected static readonly GLUE_MESHES: string;
+        protected static readonly BONES: string;
+        protected static readonly POSITION_MODE: string;
+        protected static readonly SPACING_MODE: string;
+        protected static readonly ROTATE_MODE: string;
+        protected static readonly SPACING: string;
+        protected static readonly ROTATE_OFFSET: string;
+        protected static readonly ROTATE_MIX: string;
+        protected static readonly TRANSLATE_MIX: string;
+        protected static readonly TARGET_DISPLAY: string;
+        protected static readonly CLOSED: string;
+        protected static readonly CONSTANT_SPEED: string;
+        protected static readonly VERTEX_COUNT: string;
+        protected static readonly LENGTHS: string;
         protected static readonly GOTO_AND_PLAY: string;
         protected static readonly DEFAULT_NAME: string;
         protected static _getArmatureType(value: string): ArmatureType;
         protected static _getBoneType(value: string): BoneType;
+        protected static _getPositionMode(value: string): PositionMode;
+        protected static _getSpacingMode(value: string): SpacingMode;
+        protected static _getRotateMode(value: string): RotateMode;
         protected static _getDisplayType(value: string): DisplayType;
         protected static _getBoundingBoxType(value: string): BoundingBoxType;
-        protected static _getActionType(value: string): ActionType;
         protected static _getBlendMode(value: string): BlendMode;
+        protected static _getAnimationBlendType(value: string): AnimationBlendType;
+        protected static _getActionType(value: string): ActionType;
         abstract parseDragonBonesData(rawData: any, scale: number): DragonBonesData | null;
         abstract parseTextureAtlasData(rawData: any, textureAtlasData: TextureAtlasData, scale: number): boolean;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.BaseFactory#parsetTextureAtlasData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.BaseFactory#parsetTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static parseDragonBonesData(rawData: any): DragonBonesData | null;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.BaseFactory#parsetTextureAtlasData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.BaseFactory#parsetTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static parseTextureAtlasData(rawData: any, scale?: number): any;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6749,7 +5561,14 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
+     * @private
+     */
+    const enum FrameValueType {
+        Step = 0,
+        Int = 1,
+        Float = 2,
+    }
+    /**
      * @private
      */
     class ObjectDataParser extends DataParser {
@@ -6761,16 +5580,19 @@ declare namespace dragonBones {
         protected _data: DragonBonesData;
         protected _armature: ArmatureData;
         protected _bone: BoneData;
-        protected _surface: SurfaceData;
+        protected _geometry: GeometryData;
         protected _slot: SlotData;
         protected _skin: SkinData;
         protected _mesh: MeshDisplayData;
         protected _animation: AnimationData;
         protected _timeline: TimelineData;
         protected _rawTextureAtlases: Array<any> | null;
+        private _frameValueType;
         private _defaultColorOffset;
         private _prevClockwise;
         private _prevRotation;
+        private _frameDefaultValue;
+        private _frameValueScale;
         private readonly _helpMatrixA;
         private readonly _helpMatrixB;
         private readonly _helpTransform;
@@ -6783,6 +5605,7 @@ declare namespace dragonBones {
         private readonly _frameFloatArray;
         private readonly _frameArray;
         private readonly _timelineArray;
+        private readonly _colorArray;
         private readonly _cacheRawMeshes;
         private readonly _cacheMeshes;
         private readonly _actionFrames;
@@ -6797,35 +5620,38 @@ declare namespace dragonBones {
         protected _parseArmature(rawData: any, scale: number): ArmatureData;
         protected _parseBone(rawData: any): BoneData;
         protected _parseIKConstraint(rawData: any): ConstraintData | null;
+        protected _parsePathConstraint(rawData: any): ConstraintData | null;
         protected _parseSlot(rawData: any, zOrder: number): SlotData;
         protected _parseSkin(rawData: any): SkinData;
         protected _parseDisplay(rawData: any): DisplayData | null;
+        protected _parsePath(rawData: any, display: PathDisplayData): void;
         protected _parsePivot(rawData: any, display: ImageDisplayData): void;
         protected _parseMesh(rawData: any, mesh: MeshDisplayData): void;
-        protected _parseMeshGlue(rawData: any, mesh: MeshDisplayData): void;
         protected _parseBoundingBox(rawData: any): BoundingBoxData | null;
         protected _parsePolygonBoundingBox(rawData: any): PolygonBoundingBoxData;
         protected _parseAnimation(rawData: any): AnimationData;
-        protected _parseTimeline(rawData: any, rawFrames: Array<any> | null, framesKey: string, type: TimelineType, addIntOffset: boolean, addFloatOffset: boolean, frameValueCount: number, frameParser: (rawData: any, frameStart: number, frameCount: number) => number): TimelineData | null;
+        protected _parseTimeline(rawData: any, rawFrames: Array<any> | null, framesKey: string, timelineType: TimelineType, frameValueType: FrameValueType, frameValueCount: number, frameParser: (rawData: any, frameStart: number, frameCount: number) => number, timeline?: TimelineData | null): TimelineData | null;
         protected _parseBoneTimeline(rawData: any): void;
         protected _parseSlotTimeline(rawData: any): void;
         protected _parseFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseTweenFrame(rawData: any, frameStart: number, frameCount: number): number;
+        protected _parseSingleValueFrame(rawData: any, frameStart: number, frameCount: number): number;
+        protected _parseDoubleValueFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseActionFrame(frame: ActionFrame, frameStart: number, frameCount: number): number;
         protected _parseZOrderFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseBoneAllFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseBoneTranslateFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseBoneRotateFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseBoneScaleFrame(rawData: any, frameStart: number, frameCount: number): number;
-        protected _parseSurfaceFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseSlotDisplayFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseSlotColorFrame(rawData: any, frameStart: number, frameCount: number): number;
-        protected _parseSlotFFDFrame(rawData: any, frameStart: number, frameCount: number): number;
+        protected _parseSlotDeformFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseIKConstraintFrame(rawData: any, frameStart: number, frameCount: number): number;
-        protected _parseAnimationFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseActionData(rawData: any, type: ActionType, bone: BoneData | null, slot: SlotData | null): Array<ActionData>;
+        protected _parseDeformFrame(rawData: any, frameStart: number, frameCount: number): number;
         protected _parseTransform(rawData: any, transform: Transform, scale: number): void;
         protected _parseColorTransform(rawData: any, color: ColorTransform): void;
+        protected _parseGeometry(rawData: any, geometry: GeometryData): void;
         protected _parseArray(rawData: any): void;
         protected _modifyArray(): void;
         parseDragonBonesData(rawData: any, scale?: number): DragonBonesData | null;
@@ -6844,7 +5670,6 @@ declare namespace dragonBones {
         static getInstance(): ObjectDataParser;
     }
     /**
-     * @internal
      * @private
      */
     class ActionFrame {
@@ -6855,7 +5680,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6876,24 +5701,19 @@ declare namespace dragonBones {
  */
 declare namespace dragonBones {
     /**
-     * @internal
      * @private
      */
     class BinaryDataParser extends ObjectDataParser {
         private _binaryOffset;
         private _binary;
         private _intArrayBuffer;
-        private _floatArrayBuffer;
-        private _frameIntArrayBuffer;
-        private _frameFloatArrayBuffer;
         private _frameArrayBuffer;
         private _timelineArrayBuffer;
         private _inRange(a, min, max);
         private _decodeUTF8(data);
-        private _getUTF16Key(value);
         private _parseBinaryTimeline(type, offset, timelineData?);
-        protected _parseMesh(rawData: any, mesh: MeshDisplayData): void;
         protected _parseAnimation(rawData: any): AnimationData;
+        protected _parseGeometry(rawData: any, geometry: GeometryData): void;
         protected _parseArray(rawData: any): void;
         parseDragonBonesData(rawData: any, scale?: number): DragonBonesData | null;
         private static _binaryDataParserInstance;
@@ -6913,7 +5733,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -6956,33 +5776,15 @@ declare namespace dragonBones {
      * @language zh_CN
      */
     abstract class BaseFactory {
-        /**
-         * @private
-         */
         protected static _objectParser: ObjectDataParser;
-        /**
-         * @private
-         */
         protected static _binaryParser: BinaryDataParser;
         /**
          * @private
          */
         autoSearch: boolean;
-        /**
-         * @private
-         */
         protected readonly _dragonBonesDataMap: Map<DragonBonesData>;
-        /**
-         * @private
-         */
         protected readonly _textureAtlasDataMap: Map<Array<TextureAtlasData>>;
-        /**
-         * @private
-         */
         protected _dragonBones: DragonBones;
-        /**
-         * @private
-         */
         protected _dataParser: DataParser;
         /**
          * - Create a factory instance. (typically only one global factory instance is required)
@@ -6995,46 +5797,20 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         constructor(dataParser?: DataParser | null);
-        /**
-         * @private
-         */
         protected _isSupportMesh(): boolean;
-        /**
-         * @private
-         */
         protected _getTextureData(textureAtlasName: string, textureName: string): TextureData | null;
-        /**
-         * @private
-         */
         protected _fillBuildArmaturePackage(dataPackage: BuildArmaturePackage, dragonBonesName: string, armatureName: string, skinName: string, textureAtlasName: string): boolean;
-        /**
-         * @private
-         */
         protected _buildBones(dataPackage: BuildArmaturePackage, armature: Armature): void;
         /**
          * @private
          */
         protected _buildSlots(dataPackage: BuildArmaturePackage, armature: Armature): void;
-        /**
-         * @private
-         */
-        protected _buildChildArmature(dataPackage: BuildArmaturePackage | null, slot: Slot, displayData: DisplayData): Armature | null;
-        /**
-         * @private
-         */
-        protected _getSlotDisplay(dataPackage: BuildArmaturePackage | null, displayData: DisplayData, rawDisplayData: DisplayData | null, slot: Slot): any;
-        /**
-         * @private
-         */
+        protected _buildConstraints(dataPackage: BuildArmaturePackage, armature: Armature): void;
+        protected _buildChildArmature(dataPackage: BuildArmaturePackage | null, _slot: Slot, displayData: ArmatureDisplayData): Armature | null;
+        protected _getSlotDisplay(dataPackage: BuildArmaturePackage | null, displayData: DisplayData, slot: Slot): any;
         protected abstract _buildTextureAtlasData(textureAtlasData: TextureAtlasData | null, textureAtlas: any): TextureAtlasData;
-        /**
-         * @private
-         */
         protected abstract _buildArmature(dataPackage: BuildArmaturePackage): Armature;
-        /**
-         * @private
-         */
-        protected abstract _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, displays: Array<DisplayData | null> | null, armature: Armature): Slot;
+        protected abstract _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, armature: Armature): Slot;
         /**
          * - Parse the raw data to a DragonBonesData instance and cache it to the factory.
          * @param rawData - The raw data.
@@ -7092,9 +5868,20 @@ declare namespace dragonBones {
          */
         parseTextureAtlasData(rawData: any, textureAtlas: any, name?: string | null, scale?: number): TextureAtlasData;
         /**
-         * @private
+         * - Update texture atlases.
+         * @param textureAtlases - The texture atlas objects.
+         * @param name - The texture atlas name.
+         * @version DragonBones 5.7
+         * @language en_US
          */
-        updateTextureAtlasData(name: string, textureAtlases: Array<any>): void;
+        /**
+         * - 更新贴图集对象。
+         * @param textureAtlases - 多个贴图集对象。
+         * @param name - 贴图集名称。
+         * @version DragonBones 5.7
+         * @language zh_CN
+         */
+        updateTextureAtlases(textureAtlases: Array<any>, name: string): void;
         /**
          * - Get a specific DragonBonesData instance.
          * @param name - The DragonBonesData instance cache name.
@@ -7263,6 +6050,7 @@ declare namespace dragonBones {
         clear(disposeData?: boolean): void;
         /**
          * - Create a armature from cached DragonBonesData instances and TextureAtlasData instances.
+         * Note that when the created armature that is no longer in use, you need to explicitly dispose {@link #dragonBones.Armature#dispose()}.
          * @param armatureName - The armature data name.
          * @param dragonBonesName - The cached name of the DragonBonesData instance. (If not set, all DragonBonesData instances are retrieved, and when multiple DragonBonesData instances contain a the same name armature data, it may not be possible to accurately create a specific armature)
          * @param skinName - The skin name, you can set a different ArmatureData name to share it's skin data. (If not set, use the default skin data)
@@ -7274,15 +6062,15 @@ declare namespace dragonBones {
          * </pre>
          * @see dragonBones.DragonBonesData
          * @see dragonBones.ArmatureData
-         * @see dragonBones.Armature
          * @version DragonBones 3.0
          * @language en_US
          */
         /**
          * - 通过缓存的 DragonBonesData 实例和 TextureAtlasData 实例创建一个骨架。
+         * 注意，创建的骨架不再使用时，需要显式释放 {@link #dragonBones.Armature#dispose()}。
          * @param armatureName - 骨架数据名称。
          * @param dragonBonesName - DragonBonesData 实例的缓存名称。 （如果未设置，将检索所有的 DragonBonesData 实例，当多个 DragonBonesData 实例中包含同名的骨架数据时，可能无法准确的创建出特定的骨架）
-         * @param skinName - 皮肤名称，可以设置一个其他骨架数据名称来共享其皮肤数据（如果未设置，则使用默认的皮肤数据）。
+         * @param skinName - 皮肤名称，可以设置一个其他骨架数据名称来共享其皮肤数据。（如果未设置，则使用默认的皮肤数据）
          * @returns 骨架。
          * @example
          * <pre>
@@ -7291,7 +6079,6 @@ declare namespace dragonBones {
          * </pre>
          * @see dragonBones.DragonBonesData
          * @see dragonBones.ArmatureData
-         * @see dragonBones.Armature
          * @version DragonBones 3.0
          * @language zh_CN
          */
@@ -7299,7 +6086,7 @@ declare namespace dragonBones {
         /**
          * @private
          */
-        replaceDisplay(slot: Slot, displayData: DisplayData, displayIndex?: number): void;
+        replaceDisplay(slot: Slot, displayData: DisplayData | null, displayIndex?: number): void;
         /**
          * - Replaces the current display data for a particular slot with a specific display data.
          * Specify display data with "dragonBonesName/armatureName/slotName/displayName".
@@ -7402,7 +6189,7 @@ declare namespace dragonBones {
          * 这样就能实现制作一个骨架动画模板，让其他没有制作动画的骨架共享该动画。
          * @param armature - 骨架。
          * @param armatureData - 骨架数据。
-         * @param isOverride - 是否完全覆盖原来的动画。（默认: false）。
+         * @param isOverride - 是否完全覆盖原来的动画。（默认: false）
          * @example
          * <pre>
          *     let armatureA = factory.buildArmature("armatureA", "dragonBonesA");
@@ -7440,31 +6227,8 @@ declare namespace dragonBones {
          * @private
          */
         readonly dragonBones: DragonBones;
-        /**
-         * - Deprecated, please refer to {@link #replaceSkin}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #replaceSkin}。
-         * @deprecated
-         * @language zh_CN
-         */
-        changeSkin(armature: Armature, skin: SkinData, exclude?: Array<string> | null): boolean;
-        /**
-         * - Deprecated, please refer to {@link #replaceAnimation}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #replaceAnimation}。
-         * @deprecated
-         * @language zh_CN
-         */
-        copyAnimationsToArmature(toArmature: Armature, fromArmatreName: string, fromSkinName?: string, fromDragonBonesDataName?: string, replaceOriginalAnimation?: boolean): boolean;
     }
     /**
-     * @internal
      * @private
      */
     class BuildArmaturePackage {
@@ -7478,7 +6242,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -7510,15 +6274,7 @@ declare namespace dragonBones {
      */
     class EgretTextureAtlasData extends TextureAtlasData {
         static toString(): string;
-        /**
-         * @internal
-         * @private
-         */
-        disposeEnabled: boolean;
         private _renderTexture;
-        /**
-         * @inheritDoc
-         */
         protected _onClear(): void;
         /**
          * @inheritDoc
@@ -7535,43 +6291,12 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         renderTexture: egret.Texture | null;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.BaseFactory#removeTextureAtlasData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.BaseFactory#removeTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        dispose(): void;
-        /**
-         * - Deprecated, please refer to {@link #renderTexture}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #renderTexture}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly texture: egret.Texture | null;
-    }
-    /**
-     * @internal
-     * @private
-     */
-    class EgretTextureData extends TextureData {
-        static toString(): string;
-        renderTexture: egret.Texture | null;
-        protected _onClear(): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -7615,237 +6340,6 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         readonly eventObject: EventObject;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#animationState}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#animationState}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly animationName: string;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#armature}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#armature}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly armature: Armature;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#bone}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#bone}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly bone: Bone | null;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#slot}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#slot}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly slot: Slot | null;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#animationState}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#animationState}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly animationState: AnimationState | null;
-        /**
-         * Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#name}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#name}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly frameLabel: string;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#name}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#name}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly sound: string;
-        /**
-         * - Deprecated, please refer to {@link #eventObject} {@link #dragonBones.EventObject#animationState}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #eventObject} {@link #dragonBones.EventObject#animationState}。
-         * @deprecated
-         * @language zh_CN
-         */
-        readonly movementID: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.START}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.START}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static START: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.LOOP_COMPLETE}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.LOOP_COMPLETE}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static LOOP_COMPLETE: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.COMPLETE}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.COMPLETE}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static COMPLETE: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FADE_IN}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FADE_IN}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static FADE_IN: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FADE_IN_COMPLETE}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FADE_IN_COMPLETE}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static FADE_IN_COMPLETE: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FADE_OUT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FADE_OUT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static FADE_OUT: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FADE_OUT_COMPLETE}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FADE_OUT_COMPLETE}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static FADE_OUT_COMPLETE: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FRAME_EVENT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FRAME_EVENT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static FRAME_EVENT: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.SOUND_EVENT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.SOUND_EVENT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static SOUND_EVENT: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FRAME_EVENT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FRAME_EVENT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static ANIMATION_FRAME_EVENT: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FRAME_EVENT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FRAME_EVENT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static BONE_FRAME_EVENT: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.FRAME_EVENT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.FRAME_EVENT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static MOVEMENT_FRAME_EVENT: string;
-        /**
-         * - Deprecated, please refer to {@link #dragonBones.EventObject.SOUND_EVENT}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #dragonBones.EventObject.SOUND_EVENT}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static SOUND: string;
     }
     /**
      * @inheritDoc
@@ -7856,16 +6350,6 @@ declare namespace dragonBones {
          * @private
          */
         debugDraw: boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _batchEnabled: boolean;
-        /**
-         * @internal
-         * @private
-         */
-        _childDirty: boolean;
         private _debugDraw;
         private _armature;
         private _bounds;
@@ -7930,147 +6414,12 @@ declare namespace dragonBones {
          * @inheritDoc
          */
         $measureContentBounds(bounds: egret.Rectangle): void;
-        /**
-         * @inheritDoc
-         */
-        hasEvent(type: EventStringType): boolean;
-        /**
-         * @inheritDoc
-         */
-        addEvent(type: EventStringType, listener: (event: EgretEvent) => void, target: any): void;
-        /**
-         * @inheritDoc
-         */
-        removeEvent(type: EventStringType, listener: (event: EgretEvent) => void, target: any): void;
-        /**
-         * - Deprecated, please refer to {@link dragonBones.Armature#clock} {@link dragonBones.BaseFactory#clock}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link dragonBones.Armature#clock} {@link dragonBones.BaseFactory#clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        advanceTimeBySelf(on: boolean): void;
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.Armature}。
-     * @deprecated
-     * @language zh_CN
-     */
-    type FastArmature = Armature;
-    /**
-     * 已废弃，请参考 {@link dragonBones.Bone}。
-     * @deprecated
-     * @language zh_CN
-     */
-    type FastBone = Bone;
-    /**
-     * 已废弃，请参考 {@link dragonBones.Slot}。
-     * @deprecated
-     * @language zh_CN
-     */
-    type FastSlot = Slot;
-    /**
-     * 已废弃，请参考 {@link dragonBones.Animation}。
-     * @deprecated
-     * @language zh_CN
-     */
-    type FastAnimation = Animation;
-    /**
-     * 已废弃，请参考 {@link dragonBones.AnimationState}。
-     * @deprecated
-     * @language zh_CN
-     */
-    type FastAnimationState = AnimationState;
-    /**
-     * 已废弃，请参考 {@link dragonBones.EgretEvent}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class Event extends EgretEvent {
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.EgretEvent}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class ArmatureEvent extends EgretEvent {
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.EgretEvent}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class AnimationEvent extends EgretEvent {
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.EgretEvent}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class FrameEvent extends EgretEvent {
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.EgretEvent}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class SoundEvent extends EgretEvent {
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.BaseFacory#parseTextureAtlasData()}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class EgretTextureAtlas extends EgretTextureAtlasData {
-        static toString(): string;
-        /**
-         * 已废弃，请参考 {@link dragonBones.BaseFacory#parseTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        constructor(texture: egret.Texture, rawData: any, scale?: number);
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.BaseFacory#parseTextureAtlasData()}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class EgretSheetAtlas extends EgretTextureAtlas {
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.EgretFactory#soundEventManager}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class SoundEventManager {
-        /**
-         * 已废弃，请参考 {@link dragonBones.EgretFactory#soundEventManager}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static getInstance(): EgretArmatureDisplay;
-    }
-    /**
-     * 已废弃，请参考 {@link dragonBones.Armature#cacheFrameRate}。
-     * @deprecated
-     * @language zh_CN
-     */
-    class AnimationCacheManager {
-        /**
-         * 已废弃，请参考 {@link dragonBones.Armature#cacheFrameRate}。
-         * @deprecated
-         * @language zh_CN
-         */
-        constructor();
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -8123,73 +6472,21 @@ declare namespace dragonBones {
         /**
          * @inheritDoc
          */
-        init(slotData: SlotData, displayDatas: Array<DisplayData | null> | null, rawDisplay: any, meshDisplay: any): void;
-        /**
-         * @inheritDoc
-         */
+        init(slotData: SlotData, armatureValue: Armature, rawDisplay: any, meshDisplay: any): void;
         protected _onClear(): void;
-        /**
-         * @inheritDoc
-         */
         protected _initDisplay(value: any, isRetain: boolean): void;
-        /**
-         * @inheritDoc
-         */
         protected _disposeDisplay(value: any, isRelease: boolean): void;
-        /**
-         * @inheritDoc
-         */
         protected _onUpdateDisplay(): void;
-        /**
-         * @inheritDoc
-         */
         protected _addDisplay(): void;
-        /**
-         * @inheritDoc
-         */
         protected _replaceDisplay(value: any): void;
-        /**
-         * @inheritDoc
-         */
         protected _removeDisplay(): void;
-        /**
-         * @inheritDoc
-         */
         protected _updateZOrder(): void;
-        /**
-         * @inheritDoc
-         */
-        _updateVisible(): void;
-        /**
-         * @inheritDoc
-         */
         protected _updateBlendMode(): void;
-        /**
-         * @inheritDoc
-         */
         protected _updateColor(): void;
-        /**
-         * @inheritDoc
-         */
         protected _updateFrame(): void;
-        /**
-         * @inheritDoc
-         */
         protected _updateMesh(): void;
-        /**
-         * @inheritDoc
-         */
-        _updateGlueMesh(): void;
-        /**
-         * @inheritDoc
-         */
         protected _updateTransform(): void;
-        /**
-         * @inheritDoc
-         */
         protected _identityTransform(): void;
-        private _identityTransformV4();
-        private _identityTransformV5();
         private _updateTransformV4();
         private _updateTransformV5();
     }
@@ -8197,7 +6494,7 @@ declare namespace dragonBones {
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -8228,11 +6525,7 @@ declare namespace dragonBones {
      * @language zh_CN
      */
     class EgretFactory extends BaseFactory {
-        /**
-         * @internal
-         * @private
-         */
-        static _isV5: boolean;
+        private static _time;
         private static _dragonBonesInstance;
         private static _factory;
         private static _clockHandler(time);
@@ -8251,29 +6544,20 @@ declare namespace dragonBones {
          * @inheritDoc
          */
         constructor(dataParser?: DataParser | null);
-        /**
-         * @inheritDoc
-         */
         protected _isSupportMesh(): boolean;
-        /**
-         * @inheritDoc
-         */
         protected _buildTextureAtlasData(textureAtlasData: EgretTextureAtlasData | null, textureAtlas: egret.Texture | HTMLImageElement | null): EgretTextureAtlasData;
-        /**
-         * @inheritDoc
-         */
         protected _buildArmature(dataPackage: BuildArmaturePackage): Armature;
-        /**
-         * @inheritDoc
-         */
-        protected _buildSlot(dataPackage: BuildArmaturePackage, slotData: SlotData, displays: Array<DisplayData | null> | null, armature: Armature): Slot;
+        protected _buildSlot(_dataPackage: BuildArmaturePackage, slotData: SlotData, armature: Armature): Slot;
         /**
          * - Create a armature from cached DragonBonesData instances and TextureAtlasData instances, then use the {@link #clock} to update it.
+         * Note that when the created armature proxy that is no longer in use, you need to explicitly dispose {@link #dragonBones.IArmatureProxy#dispose()}.
          * The difference is that the armature created by {@link #buildArmature} is not WorldClock instance update.
          * @param armatureName - The armature data name.
          * @param dragonBonesName - The cached name of the DragonBonesData instance. (If not set, all DragonBonesData instances are retrieved, and when multiple DragonBonesData instances contain a the same name armature data, it may not be possible to accurately create a specific armature)
          * @param skinName - The skin name, you can set a different ArmatureData name to share it's skin data. (If not set, use the default skin data)
          * @returns The armature display container.
+         * @see dragonBones.IArmatureProxy
+         * @see dragonBones.BaseFactory#buildArmature
          * @version DragonBones 4.5
          * @example
          * <pre>
@@ -8284,10 +6568,13 @@ declare namespace dragonBones {
         /**
          * - 通过缓存的 DragonBonesData 实例和 TextureAtlasData 实例创建一个骨架，并用 {@link #clock} 更新该骨架。
          * 区别在于由 {@link #buildArmature} 创建的骨架没有 WorldClock 实例驱动。
+         * 注意，创建的骨架代理不再使用时，需要显式释放 {@link #dragonBones.IArmatureProxy#dispose()}。
          * @param armatureName - 骨架数据名称。
          * @param dragonBonesName - DragonBonesData 实例的缓存名称。 （如果未设置，将检索所有的 DragonBonesData 实例，当多个 DragonBonesData 实例中包含同名的骨架数据时，可能无法准确的创建出特定的骨架）
          * @param skinName - 皮肤名称，可以设置一个其他骨架数据名称来共享其皮肤数据。（如果未设置，则使用默认的皮肤数据）
          * @returns 骨架的显示容器。
+         * @see dragonBones.IArmatureProxy
+         * @see dragonBones.BaseFactory#buildArmature
          * @version DragonBones 4.5
          * @example
          * <pre>
@@ -8324,111 +6611,12 @@ declare namespace dragonBones {
          * @language zh_CN
          */
         readonly soundEventManager: EgretArmatureDisplay;
-        /**
-         * - Deprecated, please refer to {@link #clock}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        static readonly clock: WorldClock;
-        /**
-         * - Deprecated, please refer to {@link #addDragonBonesData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #addDragonBonesData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        addSkeletonData(dragonBonesData: DragonBonesData, dragonBonesName?: string | null): void;
-        /**
-         * - Deprecated, please refer to {@link #getDragonBonesData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #getDragonBonesData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        getSkeletonData(dragonBonesName: string): DragonBonesData | null;
-        /**
-         * - Deprecated, please refer to {@link #removeDragonBonesData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #removeDragonBonesData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        removeSkeletonData(dragonBonesName: string): void;
-        /**
-         * - Deprecated, please refer to {@link #addTextureAtlasData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #addTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        addTextureAtlas(textureAtlasData: TextureAtlasData, dragonBonesName?: string | null): void;
-        /**
-         * - Deprecated, please refer to {@link #getTextureAtlas()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #getTextureAtlas()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        getTextureAtlas(dragonBonesName: string): TextureAtlasData[] | null;
-        /**
-         * - Deprecated, please refer to {@link #removeTextureAtlasData()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #removeTextureAtlasData()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        removeTextureAtlas(dragonBonesName: string): void;
-        /**
-         * - Deprecated, please refer to {@link #buildArmature()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #buildArmature()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        buildFastArmature(armatureName: string, dragonBonesName?: string, skinName?: string): FastArmature | null;
-        /**
-         * - Deprecated, please refer to {@link #clear()}.
-         * @deprecated
-         * @language en_US
-         */
-        /**
-         * - 已废弃，请参考 {@link #clear()}。
-         * @deprecated
-         * @language zh_CN
-         */
-        dispose(): void;
     }
 }
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2012-2017 DragonBones team and other contributors
+ * Copyright (c) 2012-2018 DragonBones team and other contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -8447,6 +6635,7 @@ declare namespace dragonBones {
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+declare const _super: any;
 declare namespace dragonBones {
     /**
      * 是否包含指定名称的动画组。
@@ -8624,10 +6813,6 @@ declare namespace dragonBones {
         private _clipNames;
         private _slots;
         private _childMovies;
-        /**
-         * @internal
-         * @private
-         */
         constructor(createMovieHelper: any);
         private _configToEvent(config, event);
         private _onCrossFrame(frameConfig);
@@ -8639,6 +6824,10 @@ declare namespace dragonBones {
          * @inheritDoc
          */
         $render(): void;
+        /**
+         * @inheritDoc
+         */
+        $updateRenderNode(): void;
         /**
          * @inheritDoc
          */
@@ -8752,12 +6941,6 @@ declare namespace dragonBones {
          * @inheritDoc
          */
         clock: WorldClock | null;
-        /**
-         * 已废弃，请参考 {@link dragonBones.Movie#clock} {@link dragonBones.Movie#clock} {@link dragonBones.EgretFactory#clock}。
-         * @deprecated
-         * @language zh_CN
-         */
-        advanceTimeBySelf(on: boolean): void;
         /**
          * @private
          */
